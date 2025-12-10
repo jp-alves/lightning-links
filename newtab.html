@@ -3,167 +3,19 @@
 <head>
     <title>New Tab</title>
     <link rel="icon" type="image/png" href="icons/icon.png">
-    
-    <link rel="preconnect" href="https://www.google.com">
-    
-    <style>
-        :root {
-            --col-count: 6;
-            --dial-width: 160px;
-            --col-gap: 20px;
-            --row-gap: 20px;
-            --bg-image: url('backgrounds/bg1.jpg');
-        }
-
-        body {
-            margin: 0; padding: 0;
-            font-family: 'Segoe UI', sans-serif;
-            background-image: var(--bg-image);
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            height: 100vh;
-            display: flex; align-items: center; justify-content: center;
-            background-color: #1a1a1a;
-            overflow: hidden;
-            
-            /* DELETED opacity and transition lines from here */
-        }
-
-        body.ready { opacity: 1; }
-
-        .settings-trigger {
-            position: absolute; top: 20px; right: 20px;
-            background: rgba(0,0,0,0.6); color: white;
-            border: none; padding: 10px 15px; border-radius: 20px;
-            cursor: pointer; backdrop-filter: blur(5px); z-index: 100;
-            transition: background 0.2s; font-weight: 600;
-        }
-        .settings-trigger:hover { background: rgba(0,0,0,0.8); }
-
-        .container {
-            display: grid;
-            grid-template-columns: repeat(var(--col-count), 1fr);
-            column-gap: var(--col-gap); row-gap: var(--row-gap);
-            width: 85%; max-width: 1600px; max-height: 90vh;
-            padding: 20px; overflow-y: auto; scrollbar-width: none;
-            contain: content;
-        }
-        .container::-webkit-scrollbar { display: none; }
-
-        .dial {
-            background: white; border-radius: 8px;
-            max-width: var(--dial-width); width: 100%; aspect-ratio: 1.3 / 1;
-            margin: 0 auto; display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            text-decoration: none; box-shadow: 0 2px 5px rgba(0,0,0,0.15);
-            cursor: pointer; position: relative; padding: 8px;
-            box-sizing: border-box;
-            transition: transform 0.1s, box-shadow 0.1s;
-            will-change: transform, box-shadow;
-            user-select: none;
-        }
-        .dial:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.25); z-index: 10; }
-        .dial img { width: 65%; height: 65%; object-fit: contain; margin-bottom: 5px; border-radius: 4px; pointer-events: none; }
-        .dial span { color: #444; font-size: 13px; font-weight: 600; text-align: center; width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: auto; pointer-events: none; }
-        
-        .dial.dragging { opacity: 0.4; border: 2px dashed #2196F3; transform: scale(0.95); box-shadow: none; }
-
-        .add-btn {
-            border: 2px dashed rgba(255,255,255,0.5); 
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(5px); 
-            box-shadow: none;
-            
-            /* RESTORED: Force perfect centering */
-            flex-direction: row !important;
-            align-items: center !important;
-            justify-content: center !important;
-            padding: 0 !important;
-        }
-
-        .add-btn:hover { 
-            background: rgba(255, 255, 255, 0.3); 
-            border-color: white; 
-            transform: scale(1.02); 
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
-        }
-
-        .plus { 
-            font-size: 30px !important; 
-            color: #fff; 
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5); 
-            font-weight: 50; 
-            line-height: 1; 
-            pointer-events: none;
-            
-            /* RESTORED: Prevent it from being pushed to the bottom */
-            margin: 0 !important; 
-            padding: 0 !important;
-        }
-
-        /* Context Menu & Modals */
-        .context-menu {
-            display: none; position: absolute; background: white; border-radius: 8px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2); padding: 5px 0; min-width: 150px;
-            z-index: 1000; animation: fadeIn 0.1s ease-out;
-        }
-        .context-menu-item { padding: 10px 15px; cursor: pointer; font-size: 14px; color: #333; transition: background 0.1s; }
-        .context-menu-item:hover { background-color: #f0f0f0; }
-        .context-menu-item.delete { color: #ff4444; }
-        .context-menu-item.delete:hover { background-color: #fff0f0; }
-
-        .modal {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.6); justify-content: center; align-items: center;
-            z-index: 200; backdrop-filter: blur(3px);
-        }
-        .modal-content {
-            background: white; padding: 25px; border-radius: 12px; width: 350px;
-            display: flex; flex-direction: column; gap: 15px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.5); animation: fadeIn 0.2s ease-out;
-        }
-        .settings-content { width: 500px; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Settings UI */
-        .setting-row { margin-bottom: 20px; }
-        .setting-row label { display: block; font-weight: bold; margin-bottom: 8px; color: #555; font-size: 14px; }
-        input[type=range] { width: 100%; cursor: pointer; }
-        .tabs { display: flex; border-bottom: 2px solid #eee; margin-bottom: 20px; }
-        .tab { padding: 10px 20px; cursor: pointer; font-weight: 600; color: #888; transition: color 0.2s; }
-        .tab:hover { color: #555; }
-        .tab.active { color: #2196F3; border-bottom: 3px solid #2196F3; }
-        .tab-pane { display: none; }
-        .tab-pane.active { display: block; }
-        .bg-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .bg-wrapper { position: relative; width: 100%; height: 80px; }
-        .bg-option { width: 100%; height: 100%; object-fit: cover; border-radius: 6px; cursor: pointer; border: 3px solid transparent; transition: opacity 0.2s; }
-        .bg-option:hover { opacity: 0.8; }
-        .bg-option.selected { border-color: #2196F3; }
-        .bg-delete-btn {
-            position: absolute; top: -8px; right: -8px; background: #ff4444; color: white;
-            border: 2px solid white; border-radius: 50%; width: 24px; height: 24px;
-            font-family: sans-serif; font-weight: bold; font-size: 14px; line-height: 22px;
-            text-align: center; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.3); z-index: 10;
-        }
-        .bg-delete-btn:hover { background: #cc0000; transform: scale(1.1); }
-        input[type="text"] { padding: 12px; border: 1px solid #ddd; border-radius: 6px; font-size: 14px; }
-        .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; }
-        button { padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: opacity 0.2s; }
-        button:hover { opacity: 0.9; }
-        #save-btn { background: #2196F3; color: white; }
-        #cancel-btn, #close-settings { background: #e0e0e0; color: #333; }
-        #export-btn { background: #4CAF50; color: white; }
-        #import-trigger { background: #FF9800; color: white; }
-    </style>
-
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preload" as="image" href="backgrounds/bg1.jpg">
+    <!-- CRITICAL: Load BEFORE body renders -->
     <script src="init.js"></script>
 </head>
 <body>
+
     <button id="settings-trigger" class="settings-trigger">Settings</button>
+
     <div class="container" id="dial-grid">
-        <div class="dial add-btn" id="add-btn"><span class="plus">+</span></div>
+        <div class="dial add-btn" id="add-btn">
+            <span class="plus">+</span>
+        </div>
     </div>
 
     <div id="modal" class="modal">
@@ -187,12 +39,26 @@
                 <div class="tab" data-target="tab-bg">Background</div>
                 <div class="tab" data-target="tab-data">Data</div>
             </div>
+
             <div id="tab-layout" class="tab-pane active">
-                <div class="setting-row"><label>Columns: <span id="col-val">6</span></label><input type="range" id="col-range" min="3" max="12" value="6"></div>
-                <div class="setting-row"><label>Dial Size: <span id="size-val">100%</span></label><input type="range" id="size-range" min="100" max="300" value="160"></div>
-                <div class="setting-row"><label>Horizontal Spacing: <span id="h-gap-val">20px</span></label><input type="range" id="h-gap-range" min="0" max="100" value="20"></div>
-                <div class="setting-row"><label>Vertical Spacing: <span id="v-gap-val">20px</span></label><input type="range" id="v-gap-range" min="0" max="100" value="20"></div>
+                <div class="setting-row">
+                    <label>Columns: <span id="col-val">6</span></label>
+                    <input type="range" id="col-range" min="3" max="12" value="6">
+                </div>
+                <div class="setting-row">
+                    <label>Dial Size: <span id="size-val">100%</span></label>
+                    <input type="range" id="size-range" min="100" max="300" value="160">
+                </div>
+                <div class="setting-row">
+                    <label>Horizontal Spacing: <span id="h-gap-val">20px</span></label>
+                    <input type="range" id="h-gap-range" min="0" max="100" value="20">
+                </div>
+                <div class="setting-row">
+                    <label>Vertical Spacing: <span id="v-gap-val">20px</span></label>
+                    <input type="range" id="v-gap-range" min="0" max="100" value="20">
+                </div>
             </div>
+
             <div id="tab-bg" class="tab-pane">
                 <div class="bg-grid" id="bg-grid"></div>
                 <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
@@ -200,6 +66,7 @@
                     <input type="file" id="bg-upload" accept="image/jpeg, image/png, image/webp">
                 </div>
             </div>
+
             <div id="tab-data" class="tab-pane">
                 <div class="setting-row">
                     <h3>Backup & Restore</h3>
@@ -210,13 +77,15 @@
                     </div>
                 </div>
             </div>
-            <div class="modal-buttons" style="margin-top: 20px;"><button id="close-settings">Close</button></div>
+
+            <div class="modal-buttons" style="margin-top: 20px;">
+                <button id="close-settings">Close</button>
+            </div>
         </div>
     </div>
 
     <div id="context-menu" class="context-menu">
-        <div class="context-menu-item" id="ctx-newtab">Open in New Tab</div>
-        <div class="context-menu-item" id="ctx-edit">Edit</div>
+        <div class="context-menu-item" id="ctx-newtab">Open in New Tab</div> <div class="context-menu-item" id="ctx-edit">Edit</div>
         <div class="context-menu-item delete" id="ctx-delete">Delete</div>
     </div>
 
