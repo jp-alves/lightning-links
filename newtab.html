@@ -17,7 +17,7 @@
 
         body {
             margin: 0; padding: 0;
-            font-family: 'Segoe UI', sans-serif; /* Perfect for Windows 11 */
+            font-family: 'Segoe UI', sans-serif;
             background-image: var(--bg-image);
             background-size: cover;
             background-position: center;
@@ -26,8 +26,8 @@
             display: flex; align-items: center; justify-content: center;
             background-color: #1a1a1a;
             overflow: hidden;
-            opacity: 0;
-            transition: opacity 0.2s ease-out;
+            
+            /* DELETED opacity and transition lines from here */
         }
 
         body.ready { opacity: 1; }
