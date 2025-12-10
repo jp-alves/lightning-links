@@ -13,9 +13,8 @@
 
     let editingIndex = -1;
     let contextIndex = -1;
-    let dragSrcIndex = -1; // Store Index instead of Element for cleaner delegation
+    let dragSrcIndex = -1; 
 
-    // Default dials with Base64 placeholders or caching logic
     const defaultDials = [
         { name: "Google", url: "https://www.google.com", img: "icons/icon.png" }, 
         { name: "YouTube", url: "https://www.youtube.com", img: "icons/icon.png" }
@@ -78,7 +77,6 @@
         root.style.setProperty('--dial-width', settings.dialSize + 'px');
         root.style.setProperty('--col-gap', settings.colGap + 'px');
         root.style.setProperty('--row-gap', settings.rowGap + 'px');
-        // bgImage is handled by inline script
         DOM.colVal.textContent = DOM.colRange.value = settings.colCount;
         DOM.sizeVal.textContent = Math.round((settings.dialSize / 160) * 100) + '%';
         DOM.sizeRange.value = settings.dialSize;
@@ -92,7 +90,6 @@
     }
 
     function renderDials() {
-        // Remove existing dials except add button
         const items = document.querySelectorAll('.dial:not(#add-btn)');
         items.forEach(el => el.remove());
 
@@ -103,14 +100,13 @@
             div.className = 'dial';
             div.href = dial.url;
             div.draggable = true;
-            div.dataset.index = index; // Critical for delegation
+            div.dataset.index = index; 
 
-            // Icon is now likely a Base64 string, loading instantly
+            // PERFORMANCE FIX: Removed loading="lazy"
             div.innerHTML = `
-                <img src="${dial.img}" loading="lazy" onerror="this.src='icons/icon.png'" alt="${dial.name}">
+                <img src="${dial.img}" onerror="this.src='icons/icon.png'" alt="${dial.name}">
                 <span>${dial.name}</span>
             `;
-            // NO event listeners added here!
             fragment.appendChild(div);
         });
 
@@ -161,8 +157,6 @@
 
     function attachEventListeners() {
         // --- 1. EVENT DELEGATION (Efficient Listeners) ---
-        
-        // Context Menu Delegation
         DOM.grid.addEventListener('contextmenu', (e) => {
             const dial = e.target.closest('.dial');
             if (dial && !dial.classList.contains('add-btn')) {
@@ -174,13 +168,12 @@
             }
         });
 
-        // Drag & Drop Delegation
         DOM.grid.addEventListener('dragstart', (e) => {
             const dial = e.target.closest('.dial');
             if (dial && !dial.classList.contains('add-btn')) {
                 dragSrcIndex = parseInt(dial.dataset.index);
                 e.dataTransfer.effectAllowed = 'move';
-                e.dataTransfer.setData('text/html', dial.innerHTML); // Required for drag to work
+                e.dataTransfer.setData('text/html', dial.innerHTML); 
                 dial.classList.add('dragging');
             }
         });
@@ -200,11 +193,8 @@
         DOM.grid.addEventListener('drop', (e) => {
             e.stopPropagation();
             const targetDial = e.target.closest('.dial');
-            
-            // Only drop if we are over a valid dial and not the one we are dragging
             if (targetDial && !targetDial.classList.contains('add-btn') && dragSrcIndex !== -1) {
                 const targetIndex = parseInt(targetDial.dataset.index);
-                
                 if (dragSrcIndex !== targetIndex) {
                     const item = dials.splice(dragSrcIndex, 1)[0];
                     dials.splice(targetIndex, 0, item);
@@ -215,8 +205,6 @@
             return false;
         });
 
-
-        // --- Standard UI Listeners ---
         DOM.addBtn.onclick = () => {
             editingIndex = -1;
             DOM.modalTitle.textContent = "Add New Website";
@@ -225,8 +213,6 @@
         };
 
         DOM.cancelBtn.onclick = () => { DOM.addModal.style.display = 'none'; clearInputs(); };
-        
-        // Update handleSave to be Async
         DOM.saveBtn.onclick = handleSave;
 
         document.addEventListener('click', (e) => {
@@ -263,7 +249,6 @@
         DOM.settingsBtn.onclick = () => DOM.settingsModal.style.display = 'flex';
         DOM.closeSettingsBtn.onclick = () => DOM.settingsModal.style.display = 'none';
 
-        // Range inputs with live update
         DOM.colRange.oninput = (e) => { settings.colCount = e.target.value; saveSettings(); };
         DOM.sizeRange.oninput = (e) => { settings.dialSize = e.target.value; saveSettings(); };
         DOM.hGapRange.oninput = (e) => { settings.colGap = e.target.value; saveSettings(); };
@@ -303,7 +288,6 @@
         };
     }
 
-    // --- 2. ZERO NETWORK STRATEGY (Async Save + Caching) ---
     async function handleSave() {
         const name = DOM.nameInput.value;
         let url = DOM.urlInput.value;
@@ -313,23 +297,19 @@
         if (!name || !url) return alert("Name and URL required!");
         if (!url.startsWith('http')) url = 'https://' + url;
 
-        // Show loading state on button
         const originalBtnText = DOM.saveBtn.textContent;
         DOM.saveBtn.textContent = "Saving...";
         DOM.saveBtn.disabled = true;
 
         try {
             if (imgInput) {
-                // User provided specific URL -> Try to cache it
                 finalImg = await convertUrlToBase64(imgInput) || imgInput;
             } else {
-                // Auto-generate -> Fetch Google's S2 and cache it
                 try {
                     const domain = new URL(url).hostname;
                     const googleUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
-                    // Attempt to convert to Base64
                     const cached = await convertUrlToBase64(googleUrl);
-                    finalImg = cached || googleUrl; // Fallback to URL if cache fails
+                    finalImg = cached || googleUrl;
                 } catch (e) {
                     console.error("Favicon error", e);
                 }
@@ -357,8 +337,6 @@
         }
     }
 
-    // Helper: Converts any Image URL to Base64 string
-    // This allows "Offline First" loading
     async function convertUrlToBase64(url) {
         try {
             const response = await fetch(url);
@@ -370,7 +348,7 @@
             });
         } catch (e) {
             console.warn("Could not cache image (CORS or Network):", url);
-            return null; // Return null to fall back to the URL
+            return null; 
         }
     }
 
@@ -422,7 +400,6 @@
                 else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
                 canvas.width = width; canvas.height = height;
                 ctx.drawImage(img, 0, 0, width, height);
-                // Save as WebP for performance (smaller size)
                 const optimizedDataUrl = canvas.toDataURL('image/webp', 0.8);
                 settings.bgImage = optimizedDataUrl;
                 saveSettings(); renderBackgroundOptions();
