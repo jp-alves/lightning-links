@@ -1,0 +1,8 @@
+# Mac/Linux system files
+.DS_Store
+Thumbs.db
+
+# Extension specific
+*.pem
+.idea/
+.vscode/

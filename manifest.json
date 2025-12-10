@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "Lightning Links",
+  "version": "1.0",
+  "description": "Custom browser new tab extension with fast loading.",
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  },
+  "icons": {
+    "64": "icons/icon.png"
+  },
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://www.google.com/"
+  ]
+}
