@@ -12,7 +12,9 @@ body {
     margin: 0;
     padding: 0;
     font-family: 'Segoe UI', sans-serif;
-    background-image: var(--bg-image);
+    
+    /* Variable is set by init.js before paint */
+    background-image: var(--bg-image); 
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
@@ -20,15 +22,18 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #1a1a1a; /* Dark fallback to hide content */
+    
+    /* Dark fallback matches the dark overlay of most wallpapers */
+    background-color: #1a1a1a; 
+    
+    /* Prevent scrollbars during load */
     overflow: hidden;
     
     /* SMOOTH REVEAL: Start invisible, fade in when ready */
     opacity: 0;
-    transition: opacity 0.15s ease-in;
+    transition: opacity 0.2s ease-out; /* Slightly smoother transition */
 }
 
-/* Add this class via JavaScript when ready */
 body.ready {
     opacity: 1;
 }

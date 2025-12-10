@@ -476,7 +476,6 @@
 
         });
 
-        // --- ADD THIS BLOCK HERE ---
         // Context menu: Open in New Tab
         DOM.ctxNewTab.onclick = () => {
             if (contextIndex > -1) {
