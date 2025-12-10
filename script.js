@@ -1,66 +1,30 @@
-// Optimized script.js - Performance focused
-
 (function() {
-
     'use strict';
 
-    // Cache all DOM elements once
     const DOM = {
-        grid: null,
-        addBtn: null,
-        addModal: null,
-        modalTitle: null,
-        nameInput: null,
-        urlInput: null,
-        imgInput: null,
-        saveBtn: null,
-        cancelBtn: null,
-        contextMenu: null,
-        ctxNewTab: null,
-        ctxEdit: null,
-        ctxDelete: null,
-        settingsBtn: null,
-        settingsModal: null,
-        closeSettingsBtn: null,
-        colRange: null,
-        colVal: null,
-        sizeRange: null,
-        sizeVal: null,
-        hGapRange: null,
-        hGapVal: null,
-        vGapRange: null,
-        vGapVal: null,
-        bgGrid: null,
-        tabs: null,
-        exportBtn: null,
-        importTrigger: null,
-        importFile: null,
-        bgUpload: null
-
+        grid: null, addBtn: null, addModal: null, modalTitle: null,
+        nameInput: null, urlInput: null, imgInput: null, saveBtn: null, cancelBtn: null,
+        contextMenu: null, ctxNewTab: null, ctxEdit: null, ctxDelete: null,
+        settingsBtn: null, settingsModal: null, closeSettingsBtn: null,
+        colRange: null, colVal: null, sizeRange: null, sizeVal: null,
+        hGapRange: null, hGapVal: null, vGapRange: null, vGapVal: null,
+        bgGrid: null, tabs: null, exportBtn: null, importTrigger: null, importFile: null, bgUpload: null
     };
 
-    // State
     let editingIndex = -1;
     let contextIndex = -1;
-    let dragSrcEl = null;
+    let dragSrcIndex = -1; // Store Index instead of Element for cleaner delegation
 
+    // Default dials with Base64 placeholders or caching logic
     const defaultDials = [
-        { name: "Google", url: "https://www.google.com", img: "https://www.google.com/s2/favicons?domain=google.com&sz=128" },
-        { name: "YouTube", url: "https://www.youtube.com", img: "https://www.google.com/s2/favicons?domain=youtube.com&sz=128" }
+        { name: "Google", url: "https://www.google.com", img: "icons/icon.png" }, 
+        { name: "YouTube", url: "https://www.youtube.com", img: "icons/icon.png" }
     ];
 
-    const backgrounds = [
-        'backgrounds/bg1.jpg', 'backgrounds/bg2.jpg', 'backgrounds/bg3.jpg', 
-        'backgrounds/bg4.jpg', 'backgrounds/bg5.jpg'
-    ];
-
+    const backgrounds = ['backgrounds/bg1.jpg', 'backgrounds/bg2.jpg', 'backgrounds/bg3.jpg', 'backgrounds/bg4.jpg', 'backgrounds/bg5.jpg'];
     let dials = JSON.parse(localStorage.getItem('myDials')) || defaultDials;
-    let settings = JSON.parse(localStorage.getItem('mySettings')) || {
-        colCount: 6, dialSize: 160, colGap: 20, rowGap: 20, bgImage: 'backgrounds/bg1.jpg'
+    let settings = JSON.parse(localStorage.getItem('mySettings')) || { colCount: 6, dialSize: 160, colGap: 20, rowGap: 20, bgImage: 'backgrounds/bg1.jpg' };
 
-    };
-
-    // Initialize on DOM ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);
     } else {
@@ -75,7 +39,6 @@
         attachEventListeners();
     }
 
-    // Cache all DOM elements at once
     function cacheDOMElements() {
         DOM.grid = document.getElementById('dial-grid');
         DOM.addBtn = document.getElementById('add-btn');
@@ -115,8 +78,7 @@
         root.style.setProperty('--dial-width', settings.dialSize + 'px');
         root.style.setProperty('--col-gap', settings.colGap + 'px');
         root.style.setProperty('--row-gap', settings.rowGap + 'px');
-        root.style.setProperty('--bg-image', `url('${settings.bgImage}')`);
-
+        // bgImage is handled by inline script
         DOM.colVal.textContent = DOM.colRange.value = settings.colCount;
         DOM.sizeVal.textContent = Math.round((settings.dialSize / 160) * 100) + '%';
         DOM.sizeRange.value = settings.dialSize;
@@ -129,8 +91,8 @@
         applySettings();
     }
 
-    // Optimized render using DocumentFragment
     function renderDials() {
+        // Remove existing dials except add button
         const items = document.querySelectorAll('.dial:not(#add-btn)');
         items.forEach(el => el.remove());
 
@@ -141,40 +103,20 @@
             div.className = 'dial';
             div.href = dial.url;
             div.draggable = true;
-            div.dataset.index = index;
+            div.dataset.index = index; // Critical for delegation
 
-            // Cleaner template literal
+            // Icon is now likely a Base64 string, loading instantly
             div.innerHTML = `
                 <img src="${dial.img}" loading="lazy" onerror="this.src='icons/icon.png'" alt="${dial.name}">
                 <span>${dial.name}</span>
             `;
-
-            // Use direct assignment for better performance
-            div.ondragstart = handleDragStart;
-            div.ondragover = handleDragOver;
-            div.ondrop = handleDrop;
-            div.ondragend = handleDragEnd;
-            div.oncontextmenu = (e) => {
-                e.preventDefault();
-                showContextMenu(e, index);
-            };
-
+            // NO event listeners added here!
             fragment.appendChild(div);
         });
 
         DOM.grid.insertBefore(fragment, DOM.addBtn);
-
     }
 
-    // Context menu logic
-    function showContextMenu(e, index) {
-        contextIndex = index;
-        DOM.contextMenu.style.display = 'block';
-        DOM.contextMenu.style.left = e.pageX + 'px';
-        DOM.contextMenu.style.top = e.pageY + 'px';
-    }
-
-    // Background options rendering
     function renderBackgroundOptions() {
         DOM.bgGrid.innerHTML = '';
         backgrounds.forEach(bg => createBgThumb(bg));
@@ -190,27 +132,26 @@
         img.src = src;
         img.className = 'bg-option';
         if (src === settings.bgImage) img.classList.add('selected');
-
+        
         img.onclick = () => {
             settings.bgImage = src;
             saveSettings();
             document.querySelectorAll('.bg-option').forEach(i => i.classList.remove('selected'));
             img.classList.add('selected');
+            document.documentElement.style.setProperty('--bg-image', `url('${src}')`);
         };
-
         wrapper.appendChild(img);
-
         if (isCustom) {
             const delBtn = document.createElement('div');
             delBtn.className = 'bg-delete-btn';
             delBtn.textContent = 'X';
-            delBtn.title = 'Remove custom background';
             delBtn.onclick = (e) => {
                 e.stopPropagation();
-                if (confirm('Remove this custom background?')) {
+                if (confirm('Remove custom background?')) {
                     settings.bgImage = 'backgrounds/bg1.jpg';
                     saveSettings();
                     renderBackgroundOptions();
+                    document.documentElement.style.setProperty('--bg-image', `url('backgrounds/bg1.jpg')`);
                 }
             };
             wrapper.appendChild(delBtn);
@@ -218,10 +159,64 @@
         DOM.bgGrid.appendChild(wrapper);
     }
 
-    // Attach all event listeners
     function attachEventListeners() {
-        // Modal controls
+        // --- 1. EVENT DELEGATION (Efficient Listeners) ---
+        
+        // Context Menu Delegation
+        DOM.grid.addEventListener('contextmenu', (e) => {
+            const dial = e.target.closest('.dial');
+            if (dial && !dial.classList.contains('add-btn')) {
+                e.preventDefault();
+                contextIndex = parseInt(dial.dataset.index);
+                DOM.contextMenu.style.display = 'block';
+                DOM.contextMenu.style.left = e.pageX + 'px';
+                DOM.contextMenu.style.top = e.pageY + 'px';
+            }
+        });
 
+        // Drag & Drop Delegation
+        DOM.grid.addEventListener('dragstart', (e) => {
+            const dial = e.target.closest('.dial');
+            if (dial && !dial.classList.contains('add-btn')) {
+                dragSrcIndex = parseInt(dial.dataset.index);
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/html', dial.innerHTML); // Required for drag to work
+                dial.classList.add('dragging');
+            }
+        });
+
+        DOM.grid.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        });
+
+        DOM.grid.addEventListener('dragend', (e) => {
+            const dial = e.target.closest('.dial');
+            if(dial) dial.classList.remove('dragging');
+            document.querySelectorAll('.dial').forEach(d => d.classList.remove('dragging'));
+        });
+
+        DOM.grid.addEventListener('drop', (e) => {
+            e.stopPropagation();
+            const targetDial = e.target.closest('.dial');
+            
+            // Only drop if we are over a valid dial and not the one we are dragging
+            if (targetDial && !targetDial.classList.contains('add-btn') && dragSrcIndex !== -1) {
+                const targetIndex = parseInt(targetDial.dataset.index);
+                
+                if (dragSrcIndex !== targetIndex) {
+                    const item = dials.splice(dragSrcIndex, 1)[0];
+                    dials.splice(targetIndex, 0, item);
+                    localStorage.setItem('myDials', JSON.stringify(dials));
+                    renderDials();
+                }
+            }
+            return false;
+        });
+
+
+        // --- Standard UI Listeners ---
         DOM.addBtn.onclick = () => {
             editingIndex = -1;
             DOM.modalTitle.textContent = "Add New Website";
@@ -229,30 +224,20 @@
             DOM.addModal.style.display = 'flex';
         };
 
-        DOM.cancelBtn.onclick = () => {
-            DOM.addModal.style.display = 'none';
-            clearInputs();
-        };
-
+        DOM.cancelBtn.onclick = () => { DOM.addModal.style.display = 'none'; clearInputs(); };
+        
+        // Update handleSave to be Async
         DOM.saveBtn.onclick = handleSave;
 
-        // Context menu - hide on outside click
         document.addEventListener('click', (e) => {
-            if (!DOM.contextMenu.contains(e.target)) {
-                DOM.contextMenu.style.display = 'none';
-            }
+            if (!DOM.contextMenu.contains(e.target)) DOM.contextMenu.style.display = 'none';
         });
 
-        // Context menu: Open in New Tab
         DOM.ctxNewTab.onclick = () => {
-            if (contextIndex > -1) {
-                const url = dials[contextIndex].url;
-                window.open(url, '_blank');
-            }
+            if (contextIndex > -1) window.open(dials[contextIndex].url, '_blank');
             DOM.contextMenu.style.display = 'none';
         };
 
-        // Context menu actions
         DOM.ctxEdit.onclick = () => {
             if (contextIndex > -1) {
                 const dial = dials[contextIndex];
@@ -263,7 +248,6 @@
                 DOM.imgInput.value = dial.img;
                 DOM.addModal.style.display = 'flex';
             }
-
             DOM.contextMenu.style.display = 'none';
         };
 
@@ -276,34 +260,15 @@
             DOM.contextMenu.style.display = 'none';
         };
 
-
-
-        // Settings modal
         DOM.settingsBtn.onclick = () => DOM.settingsModal.style.display = 'flex';
         DOM.closeSettingsBtn.onclick = () => DOM.settingsModal.style.display = 'none';
 
-        // Range inputs
-        DOM.colRange.oninput = (e) => {
-            settings.colCount = e.target.value;
-            saveSettings();
-        };
+        // Range inputs with live update
+        DOM.colRange.oninput = (e) => { settings.colCount = e.target.value; saveSettings(); };
+        DOM.sizeRange.oninput = (e) => { settings.dialSize = e.target.value; saveSettings(); };
+        DOM.hGapRange.oninput = (e) => { settings.colGap = e.target.value; saveSettings(); };
+        DOM.vGapRange.oninput = (e) => { settings.rowGap = e.target.value; saveSettings(); };
 
-        DOM.sizeRange.oninput = (e) => {
-            settings.dialSize = e.target.value;
-            saveSettings();
-        };
-
-        DOM.hGapRange.oninput = (e) => {
-            settings.colGap = e.target.value;
-            saveSettings();
-        };
-
-        DOM.vGapRange.oninput = (e) => {
-            settings.rowGap = e.target.value;
-            saveSettings();
-        };
-
-        // Tabs
         DOM.tabs.forEach(tab => {
             tab.onclick = () => {
                 document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -313,7 +278,6 @@
             };
         });
 
-        // Auto-generate name from URL
         DOM.urlInput.oninput = function() {
             const val = this.value;
             if (!val) return;
@@ -322,104 +286,96 @@
                 let domain = urlObj.hostname.replace('www.', '');
                 let name = domain.split('.')[0];
                 name = name.charAt(0).toUpperCase() + name.slice(1);
-                if (document.activeElement !== DOM.nameInput) {
+                if (document.activeElement !== DOM.nameInput && !DOM.nameInput.value) {
                     DOM.nameInput.value = name;
                 }
             } catch (e) {}
         };
 
-        // Import/Export
         DOM.exportBtn.onclick = handleExport;
         DOM.importTrigger.onclick = () => DOM.importFile.click();
         DOM.importFile.onchange = handleImport;
-
-        // Background upload
         DOM.bgUpload.onchange = handleBgUpload;
 
-        // Close modals on outside click
         window.onclick = (e) => {
             if (e.target === DOM.addModal) DOM.addModal.style.display = 'none';
             if (e.target === DOM.settingsModal) DOM.settingsModal.style.display = 'none';
         };
     }
 
-
-
-    function handleSave() {
+    // --- 2. ZERO NETWORK STRATEGY (Async Save + Caching) ---
+    async function handleSave() {
         const name = DOM.nameInput.value;
         let url = DOM.urlInput.value;
-        let img = DOM.imgInput.value;
+        let imgInput = DOM.imgInput.value;
+        let finalImg = "icons/icon.png";
 
         if (!name || !url) return alert("Name and URL required!");
         if (!url.startsWith('http')) url = 'https://' + url;
 
-        if (!img) {
-            try {
-                const domain = new URL(url).hostname;
-                img = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+        // Show loading state on button
+        const originalBtnText = DOM.saveBtn.textContent;
+        DOM.saveBtn.textContent = "Saving...";
+        DOM.saveBtn.disabled = true;
 
-            } catch (e) {
-                img = "icons/icon.png";
+        try {
+            if (imgInput) {
+                // User provided specific URL -> Try to cache it
+                finalImg = await convertUrlToBase64(imgInput) || imgInput;
+            } else {
+                // Auto-generate -> Fetch Google's S2 and cache it
+                try {
+                    const domain = new URL(url).hostname;
+                    const googleUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+                    // Attempt to convert to Base64
+                    const cached = await convertUrlToBase64(googleUrl);
+                    finalImg = cached || googleUrl; // Fallback to URL if cache fails
+                } catch (e) {
+                    console.error("Favicon error", e);
+                }
             }
+
+            const dialData = { name, url, img: finalImg };
+
+            if (editingIndex > -1) {
+                dials[editingIndex] = dialData;
+            } else {
+                dials.push(dialData);
+            }
+
+            localStorage.setItem('myDials', JSON.stringify(dials));
+            renderDials();
+            DOM.addModal.style.display = 'none';
+            clearInputs();
+
+        } catch (err) {
+            console.error("Save failed", err);
+            alert("Error saving. Check console.");
+        } finally {
+            DOM.saveBtn.textContent = originalBtnText;
+            DOM.saveBtn.disabled = false;
         }
+    }
 
-        const dialData = { name, url, img };
-
-        if (editingIndex > -1) {
-            dials[editingIndex] = dialData;
-
-        } else {
-
-            dials.push(dialData);
+    // Helper: Converts any Image URL to Base64 string
+    // This allows "Offline First" loading
+    async function convertUrlToBase64(url) {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+            });
+        } catch (e) {
+            console.warn("Could not cache image (CORS or Network):", url);
+            return null; // Return null to fall back to the URL
         }
-
-        localStorage.setItem('myDials', JSON.stringify(dials));
-
-        renderDials();
-
-        DOM.addModal.style.display = 'none';
-
-        clearInputs();
-
     }
 
     function clearInputs() {
-        DOM.nameInput.value = '';
-        DOM.urlInput.value = '';
-        DOM.imgInput.value = '';
-    }
-
-    // Drag & Drop handlers
-    function handleDragStart(e) {
-        dragSrcEl = this;
-        e.dataTransfer.effectAllowed = 'move';
-        e.dataTransfer.setData('text/html', this.innerHTML);
-        this.classList.add('dragging');
-
-    }
-
-    function handleDragOver(e) {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        return false;
-    }
-
-
-    function handleDrop(e) {
-        e.stopPropagation();
-        if (dragSrcEl !== this) {
-            const oldIndex = parseInt(dragSrcEl.dataset.index);
-            const newIndex = parseInt(this.dataset.index);
-            const item = dials.splice(oldIndex, 1)[0];
-            dials.splice(newIndex, 0, item);
-            localStorage.setItem('myDials', JSON.stringify(dials));
-            renderDials();
-        }
-        return false;
-    }
-
-    function handleDragEnd() {
-        this.classList.remove('dragging');
+        DOM.nameInput.value = ''; DOM.urlInput.value = ''; DOM.imgInput.value = '';
     }
 
     function handleExport() {
@@ -427,35 +383,26 @@
         const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
-        a.href = url;
-        a.download = 'lightning-links-backup.json';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url); // Clean up memory
+        a.href = url; a.download = 'lightning-links-backup.json';
+        document.body.appendChild(a); a.click();
+        document.body.removeChild(a); URL.revokeObjectURL(url);
     }
 
     function handleImport(e) {
         const file = e.target.files[0];
         if (!file) return;
-
         const reader = new FileReader();
         reader.onload = function(event) {
             try {
                 const data = JSON.parse(event.target.result);
                 if (data.dials && data.settings) {
-                    dials = data.dials;
-                    settings = data.settings;
+                    dials = data.dials; settings = data.settings;
                     localStorage.setItem('myDials', JSON.stringify(dials));
                     localStorage.setItem('mySettings', JSON.stringify(settings));
-                    renderDials();
-                    applySettings();
-                    renderBackgroundOptions();
+                    renderDials(); applySettings(); renderBackgroundOptions();
                     alert("Import successful!");
                 }
-            } catch (err) {
-                alert("Error reading file.");
-            }
+            } catch (err) { alert("Error reading file."); }
         };
         reader.readAsText(file);
     }
@@ -463,7 +410,6 @@
     function handleBgUpload(e) {
         const file = e.target.files[0];
         if (!file) return;
-
         const reader = new FileReader();
         reader.onload = function(event) {
             const img = new Image();
@@ -472,29 +418,15 @@
                 const ctx = canvas.getContext('2d');
                 const MAX_WIDTH = 1920, MAX_HEIGHT = 1080;
                 let width = img.width, height = img.height;
-
-                if (width > height) {
-                    if (width > MAX_WIDTH) {
-                        height *= MAX_WIDTH / width;
-                        width = MAX_WIDTH;
-                    }
-
-                } else {
-                    if (height > MAX_HEIGHT) {
-                        width *= MAX_HEIGHT / height;
-                        height = MAX_HEIGHT;
-                    }
-                }
-
-                canvas.width = width;
-                canvas.height = height;
+                if (width > height) { if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; } } 
+                else { if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; } }
+                canvas.width = width; canvas.height = height;
                 ctx.drawImage(img, 0, 0, width, height);
-                const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
-
+                // Save as WebP for performance (smaller size)
+                const optimizedDataUrl = canvas.toDataURL('image/webp', 0.8);
                 settings.bgImage = optimizedDataUrl;
-                saveSettings();
-                renderBackgroundOptions();
-                applySettings();
+                saveSettings(); renderBackgroundOptions();
+                document.documentElement.style.setProperty('--bg-image', `url('${optimizedDataUrl}')`);
             };
             img.src = event.target.result;
         };
