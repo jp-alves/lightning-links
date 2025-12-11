@@ -284,7 +284,7 @@
 
             div.innerHTML = `
 
-                <img src="${dial.img}" loading="lazy" onerror="this.src='icons/icon.png'" alt="${dial.name}">
+                <img src="${dial.img}" loading="lazy" onerror="this.src='icons/icon128.png'" alt="${dial.name}">
 
                 <span>${dial.name}</span>
 
@@ -681,7 +681,7 @@
 
             } catch (e) {
 
-                img = "icons/icon.png";
+                img = "icons/icon128.png";
 
             }
 
