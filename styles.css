@@ -376,3 +376,198 @@ button:hover {
 #cancel-btn, #close-settings { background: #e0e0e0; color: #333; }
 #export-btn { background: #4CAF50; color: white; }
 #import-trigger { background: #FF9800; color: white; }
+
+/* --- WORKSPACES TABS --- */
+#workspaces-container {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    background: rgba(0,0,0,0.4);
+    backdrop-filter: blur(8px);
+    border-radius: 8px;
+    padding: 5px;
+    z-index: 100;
+}
+
+#workspaces-tabs {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 5px;
+}
+
+.workspace-tab {
+    padding: 4px 10px;
+    color: #f0f0f0;
+    font-weight: 600;
+    font-size: 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    position: relative;
+}
+
+.workspace-tab:hover {
+    background: rgba(255,255,255,0.2);
+    color: #fff;
+}
+
+.workspace-tab.active {
+    background: #2196F3;
+    color: white;
+}
+
+#add-workspace-btn {
+    background: rgba(255,255,255,0.3);
+    color: white;
+    font-weight: bold;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    padding: 4px 10px;
+}
+
+/* --- DARK MODE --- */
+.dark-mode {
+    color: #f0f0f0;
+}
+
+.dark-mode .modal-content {
+    background: #2a2a2e;
+    color: #f0f0f0;
+}
+
+.dark-mode .setting-row label {
+    color: #bbb;
+}
+
+.dark-mode .tabs {
+    border-bottom-color: #444;
+}
+
+.dark-mode .tab {
+    color: #999;
+}
+.dark-mode .tab:hover {
+    color: #ccc;
+}
+.dark-mode .tab.active {
+    color: #2196F3;
+    border-bottom-color: #2196F3;
+}
+
+.dark-mode input[type="text"] {
+    background: #3a3a3e;
+    border-color: #555;
+    color: #f0f0f0;
+}
+
+.dark-mode #cancel-btn, .dark-mode #close-settings {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.dark-mode #workspaces-container {
+    background: rgba(255,255,255,0.8);
+    backdrop-filter: blur(8px);
+}
+
+.dark-mode .workspace-tab {
+    color: #333;
+}
+
+.dark-mode .workspace-tab:hover {
+    background: rgba(0,0,0,0.1);
+    color: #000;
+}
+
+.dark-mode .workspace-tab.active {
+    background: #2196F3;
+    color: white;
+}
+
+.dark-mode #add-workspace-btn {
+    background: rgba(0,0,0,0.15);
+    color: #333;
+}
+
+.dark-mode .context-menu {
+    background: #3a3a3e;
+}
+
+.dark-mode .context-menu-item {
+    color: #f0f0f0;
+}
+
+.dark-mode .context-menu-item:hover {
+    background-color: #4a4a4e;
+}
+
+.dark-mode .context-menu-item.delete {
+    color: #ff5555;
+}
+
+.dark-mode .context-menu-item.delete:hover {
+    background-color: #5e3a3e;
+}
+
+.dark-mode .settings-trigger {
+    background: rgba(255, 255, 255, 0.8);
+    color: #333;
+}
+
+/* --- TOGGLE SWITCH --- */
+.sub-label {
+    font-size: 12px;
+    color: #888;
+    font-weight: normal;
+    margin-top: 4px;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 28px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 28px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider {
+    background-color: #2196F3;
+}
+
+input:checked + .slider:before {
+    transform: translateX(22px);
+}

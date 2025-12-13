@@ -10,6 +10,12 @@
 
     <button id="settings-trigger" class="settings-trigger">Settings</button>
 
+    <div id="workspaces-container">
+        <ul id="workspaces-tabs">
+            <!-- Tabs will be dynamically inserted here -->
+        </ul>
+    </div>
+
     <div class="container" id="dial-grid">
         <div class="dial add-btn" id="add-btn">
             <span class="plus">+</span>
@@ -35,6 +41,7 @@
             <div class="tabs">
                 <div class="tab active" data-target="tab-layout">Layout</div>
                 <div class="tab" data-target="tab-bg">Background</div>
+                <div class="tab" data-target="tab-theme">Theme</div>
                 <div class="tab" data-target="tab-data">Data</div>
             </div>
 
@@ -65,7 +72,26 @@
                 </div>
             </div>
 
+            <div id="tab-theme" class="tab-pane">
+                <div class="setting-row">
+                    <h3>Mode</h3>
+                    <div id="theme-options">
+                        <label><input type="radio" name="theme" value="light" checked> Light Mode</label>
+                        <label><input type="radio" name="theme" value="dark"> Dark Mode</label>
+                    </div>
+                </div>
+            </div>
+
             <div id="tab-data" class="tab-pane">
+                <div class="setting-row">
+                    <label>Cache Icons
+                        <div class="sub-label">Saves icons locally for faster loading and offline access. May use more storage.</div>
+                    </label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="cache-icons-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
                 <div class="setting-row">
                     <h3>Backup & Restore</h3>
                     <div style="display: flex; gap: 10px;">
@@ -86,6 +112,11 @@
         <div class="context-menu-item" id="ctx-newtab">Open in New Tab</div>
         <div class="context-menu-item" id="ctx-edit">Edit</div>
         <div class="context-menu-item delete" id="ctx-delete">Delete</div>
+    </div>
+
+    <div id="workspace-context-menu" class="context-menu">
+        <div class="context-menu-item" id="ctx-edit-workspace">Edit Name</div>
+        <div class="context-menu-item delete" id="ctx-delete-workspace">Delete</div>
     </div>
 
     <script src="script.js"></script>

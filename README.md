@@ -12,6 +12,7 @@ A blazing fast, privacy-focused New Tab page designed for performance. Lightning
     * Upload custom backgrounds (auto-optimized) or choose from presets.
 * **Privacy First:** **No data leaves your device.** All shortcuts and settings are saved in your browser's `localStorage`.
 * **Import/Export:** Easily backup your configuration or move it to another computer.
+* **No AI Bloat:** No AI features that slow down the application will be included.
 
 ## 🛠 Installation (Developer Mode)
 
