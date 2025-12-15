@@ -1203,137 +1203,43 @@
 
 
     async function faviconToDataURL(url) {
-
-
-
         try {
-
-
-
-            // Use a CORS proxy if you face frequent CORS issues, but for now, try direct fetch
-
-
-
-            const response = await fetch(url, { mode: 'cors' });
-
-
-
-            if (!response.ok) throw new Error('CORS or network error');
-
-
-
-
-
-
+            // 1. Fetch the image. 
+            // Note: This requires 'host_permissions' in manifest.json to work.
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Network response was not ok');
 
             const blob = await response.blob();
-
-
-
             const objectURL = URL.createObjectURL(blob);
 
-
-
-
-
-
-
             return new Promise((resolve, reject) => {
-
-
-
                 const img = new Image();
-
-
-
                 img.onload = () => {
-
-
-
                     const canvas = document.createElement('canvas');
 
-
-
-                    canvas.width = 32;
-
-
-
-                    canvas.height = 32;
-
-
+                    // 2. Use the actual size of the image (e.g., 128x128)
+                    // instead of forcing 32x32, so icons look sharp.
+                    canvas.width = img.width;
+                    canvas.height = img.height;
 
                     const ctx = canvas.getContext('2d');
-
-
-
-                    ctx.drawImage(img, 0, 0, 32, 32);
-
-
+                    ctx.drawImage(img, 0, 0);
 
                     const dataURL = canvas.toDataURL('image/png');
-
-
-
                     URL.revokeObjectURL(objectURL);
-
-
-
                     resolve(dataURL);
-
-
-
                 };
-
-
-
                 img.onerror = () => {
-
-
-
                     URL.revokeObjectURL(objectURL);
-
-
-
-                    // If it fails to load as an image, it's not a valid image blob
-
-
-
-                    reject(new Error('Failed to load image from blob'));
-
-
-
+                    reject(new Error('Failed to load image'));
                 };
-
-
-
                 img.src = objectURL;
-
-
-
             });
-
-
-
         } catch (e) {
-
-
-
             console.warn(`Failed to cache icon from ${url}:`, e);
-
-
-
-            // Fallback to the original URL if caching fails
-
-
-
+            // Fallback: Return original URL so it at least works while online
             return url;
-
-
-
         }
-
-
-
     }
 
 

@@ -14,5 +14,8 @@
   "permissions": [
     "storage"
   ],
+  "host_permissions": [
+    "https://www.google.com/*"
+  ],
   "offline_enabled": true
 }
