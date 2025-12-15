@@ -1,6 +1,6 @@
 // Optimized script.js - Performance focused
 
-(function() {
+(function () {
 
     'use strict';
 
@@ -36,6 +36,12 @@
 
         ctxDelete: null,
 
+        workspaceContextMenu: null,
+
+        ctxEditWorkspace: null,
+
+        ctxDeleteWorkspace: null,
+
         settingsBtn: null,
 
         settingsModal: null,
@@ -68,7 +74,11 @@
 
         importFile: null,
 
-        bgUpload: null
+        bgUpload: null,
+
+        themeOptions: null,
+
+        cacheIconsToggle: null
 
     };
 
@@ -79,6 +89,8 @@
     let editingIndex = -1;
 
     let contextIndex = -1;
+
+    let contextWorkspaceName = null;
 
     let dragSrcEl = null;
 
@@ -96,7 +108,7 @@
 
     const backgrounds = [
 
-        'backgrounds/bg1.jpg', 'backgrounds/bg2.jpg', 'backgrounds/bg3.jpg', 
+        'backgrounds/bg1.jpg', 'backgrounds/bg2.jpg', 'backgrounds/bg3.jpg',
 
         'backgrounds/bg4.jpg', 'backgrounds/bg5.jpg'
 
@@ -104,13 +116,183 @@
 
 
 
-    let dials = JSON.parse(localStorage.getItem('myDials')) || defaultDials;
+    let workspaces = {};
+
+
+
+    let lastActiveWorkspace = 'Home';
+
+
 
     let settings = JSON.parse(localStorage.getItem('mySettings')) || {
 
-        colCount: 6, dialSize: 160, colGap: 20, rowGap: 20, bgImage: 'backgrounds/bg1.jpg'
+
+
+        colCount: 6,
+
+
+
+        dialSize: 160,
+
+
+
+        colGap: 20,
+
+
+
+        rowGap: 20,
+
+
+
+        bgImage: 'backgrounds/bg1.jpg',
+
+
+
+        theme: 'light',
+
+
+
+        cacheIcons: false
+
+
 
     };
+
+
+
+
+
+
+
+    // Data Migration from old version
+
+
+
+    function migrateData() {
+
+
+
+        const oldDials = localStorage.getItem('myDials');
+
+
+
+        if (oldDials) {
+
+
+
+            try {
+
+
+
+                workspaces['Home'] = JSON.parse(oldDials);
+
+
+
+                localStorage.removeItem('myDials');
+
+
+
+                saveWorkspaces();
+
+
+
+            } catch (e) {
+
+
+
+                console.error("Error migrating old data:", e);
+
+
+
+                // If migration fails, start with default
+
+
+
+                workspaces['Home'] = defaultDials;
+
+
+
+            }
+
+
+
+        } else {
+
+
+
+            const savedWorkspaces = localStorage.getItem('myWorkspaces');
+
+
+
+            if (savedWorkspaces) {
+
+
+
+                workspaces = JSON.parse(savedWorkspaces);
+
+
+
+                lastActiveWorkspace = localStorage.getItem('lastActiveWorkspace') || 'Home';
+
+
+
+            } else {
+
+
+
+                workspaces['Home'] = defaultDials;
+
+
+
+            }
+
+
+
+        }
+
+
+
+    }
+
+
+
+
+
+
+
+    function getActiveDials() {
+
+
+
+        return workspaces[lastActiveWorkspace] || [];
+
+
+
+    }
+
+
+
+
+
+
+
+    function saveWorkspaces() {
+
+
+
+        localStorage.setItem('myWorkspaces', JSON.stringify(workspaces));
+
+
+
+        localStorage.setItem('lastActiveWorkspace', lastActiveWorkspace);
+
+
+
+    }
+
+
+
+
 
 
 
@@ -130,15 +312,35 @@
 
     function init() {
 
+
+
+        migrateData();
+
+
+
         cacheDOMElements();
+
+
 
         applySettings();
 
+
+
         renderDials();
+
+
 
         renderBackgroundOptions();
 
+
+
+        renderWorkspacesTabs();
+
+
+
         attachEventListeners();
+
+
 
     }
 
@@ -174,6 +376,12 @@
 
         DOM.ctxDelete = document.getElementById('ctx-delete');
 
+        DOM.workspaceContextMenu = document.getElementById('workspace-context-menu');
+
+        DOM.ctxEditWorkspace = document.getElementById('ctx-edit-workspace');
+
+        DOM.ctxDeleteWorkspace = document.getElementById('ctx-delete-workspace');
+
         DOM.settingsBtn = document.getElementById('settings-trigger');
 
         DOM.settingsModal = document.getElementById('settings-modal');
@@ -208,6 +416,58 @@
 
         DOM.bgUpload = document.getElementById('bg-upload');
 
+        DOM.workspacesTabs = document.getElementById('workspaces-tabs');
+        DOM.themeOptions = document.getElementById('theme-options');
+        DOM.cacheIconsToggle = document.getElementById('cache-icons-toggle');
+
+    }
+
+
+
+    function renderWorkspacesTabs() {
+
+        DOM.workspacesTabs.innerHTML = '';
+
+        const workspaceNames = Object.keys(workspaces);
+
+
+
+        workspaceNames.forEach(name => {
+
+            const li = document.createElement('li');
+
+            li.className = 'workspace-tab';
+
+            li.textContent = name;
+
+            li.dataset.name = name;
+
+            if (name === lastActiveWorkspace) {
+
+                li.classList.add('active');
+
+            }
+
+            DOM.workspacesTabs.appendChild(li);
+
+        });
+
+
+
+        if (workspaceNames.length < 5) {
+
+            const addButton = document.createElement('li');
+
+            addButton.className = 'workspace-tab';
+
+            addButton.id = 'add-workspace-btn';
+
+            addButton.textContent = '+';
+
+            DOM.workspacesTabs.appendChild(addButton);
+
+        }
+
     }
 
 
@@ -238,6 +498,30 @@
 
         DOM.vGapVal.textContent = DOM.vGapRange.value = settings.rowGap + 'px';
 
+
+
+        // Apply theme
+
+        if (settings.theme === 'dark') {
+
+            document.body.classList.add('dark-mode');
+
+            DOM.themeOptions.querySelector('input[value="dark"]').checked = true;
+
+        } else {
+
+            document.body.classList.remove('dark-mode');
+
+            DOM.themeOptions.querySelector('input[value="light"]').checked = true;
+
+        }
+
+
+
+        // Apply cache icons toggle
+
+        DOM.cacheIconsToggle.checked = settings.cacheIcons;
+
     }
 
 
@@ -266,6 +550,8 @@
 
 
 
+        const dials = getActiveDials();
+
         dials.forEach((dial, index) => {
 
             const div = document.createElement('a');
@@ -278,17 +564,17 @@
 
             div.dataset.index = index;
 
-            
+
 
             // Cleaner template literal
 
             div.innerHTML = `
 
-                <img src="${dial.img}" loading="lazy" onerror="this.src='icons/icon128.png'" alt="${dial.name}">
+                        <img src="${dial.img}" loading="lazy" onerror="this.src='icons/icon128.png'" alt="${dial.name}">
 
-                <span>${dial.name}</span>
+                        <span>${dial.name}</span>
 
-            `;
+                    `;
 
 
 
@@ -340,6 +626,22 @@
 
 
 
+    function showWorkspaceContextMenu(e, workspaceName) {
+
+        if (workspaceName === 'Home') return; // Don't allow context menu on Home
+
+        contextWorkspaceName = workspaceName;
+
+        DOM.workspaceContextMenu.style.display = 'block';
+
+        DOM.workspaceContextMenu.style.left = e.pageX + 'px';
+
+        DOM.workspaceContextMenu.style.top = e.pageY + 'px';
+
+    }
+
+
+
     // Background options rendering
 
     function renderBackgroundOptions() {
@@ -374,7 +676,7 @@
 
         if (src === settings.bgImage) img.classList.add('selected');
 
-        
+
 
         img.onclick = () => {
 
@@ -434,6 +736,84 @@
 
     function attachEventListeners() {
 
+        // Workspace Tabs
+
+        DOM.workspacesTabs.addEventListener('click', (e) => {
+
+            const target = e.target;
+
+            if (target.id === 'add-workspace-btn') {
+
+                const name = prompt('Enter new workspace name:');
+
+                if (name && name.trim()) {
+
+                    if (Object.keys(workspaces).length >= 5) {
+
+                        alert('Maximum of 5 workspaces allowed.');
+
+                        return;
+
+                    }
+
+                    if (workspaces[name.trim()]) {
+
+                        alert('Workspace name already exists.');
+
+                        return;
+
+                    }
+
+                    workspaces[name.trim()] = [];
+
+                    lastActiveWorkspace = name.trim();
+
+                    saveWorkspaces();
+
+                    renderWorkspacesTabs();
+
+                    renderDials();
+
+                }
+
+            } else if (target.classList.contains('workspace-tab')) {
+
+                const workspaceName = target.dataset.name;
+
+                if (workspaceName) {
+
+                    lastActiveWorkspace = workspaceName;
+
+                    saveWorkspaces();
+
+                    renderWorkspacesTabs();
+
+                    renderDials();
+
+                }
+
+            }
+
+        });
+
+
+
+        DOM.workspacesTabs.addEventListener('contextmenu', (e) => {
+
+            const target = e.target;
+
+            if (target.classList.contains('workspace-tab') && target.id !== 'add-workspace-btn') {
+
+                e.preventDefault();
+
+                showWorkspaceContextMenu(e, target.dataset.name);
+
+            }
+
+        });
+
+
+
         // Modal controls
 
         DOM.addBtn.onclick = () => {
@@ -474,15 +854,120 @@
 
             }
 
+            if (!DOM.workspaceContextMenu.contains(e.target)) {
+
+                DOM.workspaceContextMenu.style.display = 'none';
+
+            }
+
         });
 
-        // Context menu: Open in New Tab
-        DOM.ctxNewTab.onclick = () => {
-            if (contextIndex > -1) {
-                const url = dials[contextIndex].url;
-                window.open(url, '_blank');
+
+
+        // Workspace Context Menu Actions
+
+        DOM.ctxEditWorkspace.onclick = () => {
+
+            if (!contextWorkspaceName) return;
+
+            const newName = prompt(`Enter new name for "${contextWorkspaceName}":`, contextWorkspaceName);
+
+            if (newName && newName.trim() && newName.trim() !== contextWorkspaceName) {
+
+                if (workspaces[newName.trim()]) {
+
+                    alert('Workspace name already exists.');
+
+                    return;
+
+                }
+
+                // Update the workspace name
+
+                workspaces[newName.trim()] = workspaces[contextWorkspaceName];
+
+                delete workspaces[contextWorkspaceName];
+
+
+
+                // If the active workspace was renamed, update it
+
+                if (lastActiveWorkspace === contextWorkspaceName) {
+
+                    lastActiveWorkspace = newName.trim();
+
+                }
+
+                saveWorkspaces();
+
+                renderWorkspacesTabs();
+
             }
+
+            DOM.workspaceContextMenu.style.display = 'none';
+
+        };
+
+
+
+        DOM.ctxDeleteWorkspace.onclick = () => {
+
+            if (!contextWorkspaceName) return;
+
+
+
+            if (Object.keys(workspaces).length <= 1) {
+
+                alert("You cannot delete the last workspace.");
+
+                DOM.workspaceContextMenu.style.display = 'none';
+
+                return;
+
+            }
+
+
+
+            if (confirm(`Are you sure you want to delete the "${contextWorkspaceName}" workspace and all its links?`)) {
+
+                delete workspaces[contextWorkspaceName];
+
+                // If we deleted the active workspace, switch to Home
+
+                if (lastActiveWorkspace === contextWorkspaceName) {
+
+                    lastActiveWorkspace = 'Home';
+
+                }
+
+                saveWorkspaces();
+
+                renderWorkspacesTabs();
+
+                renderDials();
+
+            }
+
+            DOM.workspaceContextMenu.style.display = 'none';
+
+        };
+
+
+
+        // Context menu: Open in New Tab
+
+        DOM.ctxNewTab.onclick = () => {
+
+            if (contextIndex > -1) {
+
+                const url = getActiveDials()[contextIndex].url;
+
+                window.open(url, '_blank');
+
+            }
+
             DOM.contextMenu.style.display = 'none';
+
         };
 
         // Context menu actions
@@ -491,7 +976,7 @@
 
             if (contextIndex > -1) {
 
-                const dial = dials[contextIndex];
+                const dial = getActiveDials()[contextIndex];
 
                 editingIndex = contextIndex;
 
@@ -515,17 +1000,31 @@
 
         DOM.ctxDelete.onclick = () => {
 
-            if (contextIndex > -1 && confirm(`Delete ${dials[contextIndex].name}?`)) {
 
-                dials.splice(contextIndex, 1);
 
-                localStorage.setItem('myDials', JSON.stringify(dials));
+            if (contextIndex > -1 && confirm(`Delete ${getActiveDials()[contextIndex].name}?`)) {
+
+
+
+                getActiveDials().splice(contextIndex, 1);
+
+
+
+                saveWorkspaces();
+
+
 
                 renderDials();
 
+
+
             }
 
+
+
             DOM.contextMenu.style.display = 'none';
+
+
 
         };
 
@@ -575,6 +1074,30 @@
 
 
 
+        // Theme options
+
+        DOM.themeOptions.onchange = (e) => {
+
+            settings.theme = e.target.value;
+
+            saveSettings();
+
+        };
+
+
+
+        // Cache icons toggle
+
+        DOM.cacheIconsToggle.onchange = (e) => {
+
+            settings.cacheIcons = e.target.checked;
+
+            saveSettings();
+
+        };
+
+
+
         // Tabs
 
         DOM.tabs.forEach(tab => {
@@ -597,7 +1120,7 @@
 
         // Auto-generate name from URL
 
-        DOM.urlInput.oninput = function() {
+        DOM.urlInput.oninput = function () {
 
             const val = this.value;
 
@@ -619,7 +1142,7 @@
 
                 }
 
-            } catch (e) {}
+            } catch (e) { }
 
         };
 
@@ -655,37 +1178,251 @@
 
 
 
-    function handleSave() {
+    function clearInputs() {
+
+
+
+        DOM.nameInput.value = '';
+
+
+
+        DOM.urlInput.value = '';
+
+
+
+        DOM.imgInput.value = '';
+
+
+
+    }
+
+
+
+
+
+
+
+    async function faviconToDataURL(url) {
+
+
+
+        try {
+
+
+
+            // Use a CORS proxy if you face frequent CORS issues, but for now, try direct fetch
+
+
+
+            const response = await fetch(url, { mode: 'cors' });
+
+
+
+            if (!response.ok) throw new Error('CORS or network error');
+
+
+
+
+
+
+
+            const blob = await response.blob();
+
+
+
+            const objectURL = URL.createObjectURL(blob);
+
+
+
+
+
+
+
+            return new Promise((resolve, reject) => {
+
+
+
+                const img = new Image();
+
+
+
+                img.onload = () => {
+
+
+
+                    const canvas = document.createElement('canvas');
+
+
+
+                    canvas.width = 32;
+
+
+
+                    canvas.height = 32;
+
+
+
+                    const ctx = canvas.getContext('2d');
+
+
+
+                    ctx.drawImage(img, 0, 0, 32, 32);
+
+
+
+                    const dataURL = canvas.toDataURL('image/png');
+
+
+
+                    URL.revokeObjectURL(objectURL);
+
+
+
+                    resolve(dataURL);
+
+
+
+                };
+
+
+
+                img.onerror = () => {
+
+
+
+                    URL.revokeObjectURL(objectURL);
+
+
+
+                    // If it fails to load as an image, it's not a valid image blob
+
+
+
+                    reject(new Error('Failed to load image from blob'));
+
+
+
+                };
+
+
+
+                img.src = objectURL;
+
+
+
+            });
+
+
+
+        } catch (e) {
+
+
+
+            console.warn(`Failed to cache icon from ${url}:`, e);
+
+
+
+            // Fallback to the original URL if caching fails
+
+
+
+            return url;
+
+
+
+        }
+
+
+
+    }
+
+
+
+
+
+
+
+    async function handleSave() {
+
+
 
         const name = DOM.nameInput.value;
 
+
+
         let url = DOM.urlInput.value;
+
+
 
         let img = DOM.imgInput.value;
 
 
 
+
+
+
+
         if (!name || !url) return alert("Name and URL required!");
+
+
 
         if (!url.startsWith('http')) url = 'https://' + url;
 
-        
+
+
+
+
+
 
         if (!img) {
 
+
+
             try {
+
+
 
                 const domain = new URL(url).hostname;
 
+
+
                 img = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+
+
 
             } catch (e) {
 
+
+
                 img = "icons/icon128.png";
+
+
 
             }
 
+
+
         }
+
+
+
+
+
+
+
+        if (settings.cacheIcons && img !== "icons/icon128.png") {
+
+
+
+            img = await faviconToDataURL(img);
+
+
+
+        }
+
+
+
+
 
 
 
@@ -693,37 +1430,53 @@
 
 
 
+
+
+
+
+        const activeDials = getActiveDials();
+
+
+
         if (editingIndex > -1) {
 
-            dials[editingIndex] = dialData;
+
+
+            activeDials[editingIndex] = dialData;
+
+
 
         } else {
 
-            dials.push(dialData);
+
+
+            activeDials.push(dialData);
+
+
 
         }
 
 
 
-        localStorage.setItem('myDials', JSON.stringify(dials));
+
+
+
+
+        saveWorkspaces();
+
+
 
         renderDials();
 
+
+
         DOM.addModal.style.display = 'none';
+
+
 
         clearInputs();
 
-    }
 
-
-
-    function clearInputs() {
-
-        DOM.nameInput.value = '';
-
-        DOM.urlInput.value = '';
-
-        DOM.imgInput.value = '';
 
     }
 
@@ -759,25 +1512,59 @@
 
     function handleDrop(e) {
 
+
+
         e.stopPropagation();
+
+
 
         if (dragSrcEl !== this) {
 
+
+
             const oldIndex = parseInt(dragSrcEl.dataset.index);
+
+
 
             const newIndex = parseInt(this.dataset.index);
 
-            const item = dials.splice(oldIndex, 1)[0];
 
-            dials.splice(newIndex, 0, item);
 
-            localStorage.setItem('myDials', JSON.stringify(dials));
+
+
+
+
+            const activeDials = getActiveDials();
+
+
+
+            const item = activeDials.splice(oldIndex, 1)[0];
+
+
+
+            activeDials.splice(newIndex, 0, item);
+
+
+
+
+
+
+
+            saveWorkspaces();
+
+
 
             renderDials();
 
+
+
         }
 
+
+
         return false;
+
+
 
     }
 
@@ -793,25 +1580,47 @@
 
     function handleExport() {
 
-        const data = { dials, settings };
 
-        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+
+        const data = { workspaces, lastActiveWorkspace, settings };
+
+
+
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+
+
 
         const url = URL.createObjectURL(blob);
 
+
+
         const a = document.createElement('a');
+
+
 
         a.href = url;
 
+
+
         a.download = 'lightning-links-backup.json';
+
+
 
         document.body.appendChild(a);
 
+
+
         a.click();
+
+
 
         document.body.removeChild(a);
 
+
+
         URL.revokeObjectURL(url); // Clean up memory
+
+
 
     }
 
@@ -819,49 +1628,147 @@
 
     function handleImport(e) {
 
+
+
         const file = e.target.files[0];
+
+
 
         if (!file) return;
 
-        
+
+
+
+
+
 
         const reader = new FileReader();
 
-        reader.onload = function(event) {
+
+
+        reader.onload = function (event) {
+
+
 
             try {
 
+
+
                 const data = JSON.parse(event.target.result);
 
-                if (data.dials && data.settings) {
 
-                    dials = data.dials;
+
+                if (data.workspaces && data.settings) { // New format
+
+
+
+                    workspaces = data.workspaces;
+
+
+
+                    lastActiveWorkspace = data.lastActiveWorkspace || 'Home';
+
+
 
                     settings = data.settings;
 
-                    localStorage.setItem('myDials', JSON.stringify(dials));
 
-                    localStorage.setItem('mySettings', JSON.stringify(settings));
+
+                    saveWorkspaces();
+
+
+
+                    saveSettings();
+
+
 
                     renderDials();
 
+
+
                     applySettings();
+
+
 
                     renderBackgroundOptions();
 
+
+
+                    renderWorkspacesTabs();
+
+
+
                     alert("Import successful!");
+
+
+
+                } else if (data.dials && data.settings) { // Old format
+
+
+
+                    workspaces['Home'] = data.dials;
+
+
+
+                    lastActiveWorkspace = 'Home';
+
+
+
+                    settings = data.settings;
+
+
+
+                    saveWorkspaces();
+
+
+
+                    saveSettings();
+
+
+
+                    renderDials();
+
+
+
+                    applySettings();
+
+
+
+                    renderBackgroundOptions();
+
+
+
+                    renderWorkspacesTabs();
+
+
+
+                    alert("Old backup format imported successfully into 'Home' workspace!");
+
+
 
                 }
 
+
+
             } catch (err) {
+
+
 
                 alert("Error reading file.");
 
+
+
             }
+
+
 
         };
 
+
+
         reader.readAsText(file);
+
+
 
     }
 
@@ -877,11 +1784,11 @@
 
         const reader = new FileReader();
 
-        reader.onload = function(event) {
+        reader.onload = function (event) {
 
             const img = new Image();
 
-            img.onload = function() {
+            img.onload = function () {
 
                 const canvas = document.createElement('canvas');
 

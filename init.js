@@ -1,7 +1,7 @@
 // init.js - Smart Preload Implementation
-(function() {
+(function () {
     'use strict';
-    
+
     let bgImageURL = 'backgrounds/bg1.jpg'; // Default
     let settings = null;
 
@@ -31,7 +31,7 @@
 
     // 4. SMART REVEAL: Wait for BOTH DOM readiness AND Image Loading
     // This ensures no white flash if the image is heavy
-    
+
     let domReady = false;
     let imgReady = false;
 
@@ -53,7 +53,7 @@
     };
     imgLoader.onerror = () => {
         // If image fails, reveal anyway so user isn't stuck on black screen
-        imgReady = true; 
+        imgReady = true;
         checkReveal();
     };
     imgLoader.src = bgImageURL;
@@ -64,7 +64,7 @@
             imgReady = true;
             checkReveal();
         }
-    }, 500); 
+    }, 500);
 
     function checkReveal() {
         if (domReady && imgReady) {
