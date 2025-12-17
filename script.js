@@ -340,11 +340,43 @@
 
         attachEventListeners();
 
-
+        if (settings.cacheIcons) {
+            requestIdleCallback(performIconCaching);
+        }
 
     }
 
+    async function performIconCaching() {
+        let changed = false;
+        const dials = workspaces[lastActiveWorkspace] || [];
 
+        for (let i = 0; i < dials.length; i++) {
+            // OPTIMIZATION #4: Yield control back to the browser
+            // This pauses for 0ms, pushing the next iteration to the end of the event queue.
+            // It allows the UI to remain responsive (clicks/scrolling) between icon conversions.
+            await new Promise(resolve => setTimeout(resolve, 0));
+
+            const dial = dials[i];
+
+            // Check if it's a remote URL (not data:URI)
+            if (dial.img && dial.img.startsWith('http')) {
+                try {
+                    const base64 = await faviconToDataURL(dial.img);
+                    if (base64 && base64.startsWith('data:')) {
+                        dial.img = base64;
+                        changed = true;
+                    }
+                } catch (e) {
+                    console.warn(`Could not cache icon for ${dial.name}`);
+                }
+            }
+        }
+
+        if (changed) {
+            saveWorkspaces();
+            console.log("All icons optimized to local cache.");
+        }
+    }
 
     // Cache all DOM elements at once
 
@@ -575,27 +607,6 @@
                         <span>${dial.name}</span>
 
                     `;
-
-
-
-            // Use direct assignment for better performance
-
-            div.ondragstart = handleDragStart;
-
-            div.ondragover = handleDragOver;
-
-            div.ondrop = handleDrop;
-
-            div.ondragend = handleDragEnd;
-
-            div.oncontextmenu = (e) => {
-
-                e.preventDefault();
-
-                showContextMenu(e, index);
-
-            };
-
 
 
             fragment.appendChild(div);
@@ -1174,6 +1185,64 @@
 
         };
 
+        // Optimization #1: Delegated Events
+
+        // 1. Drag Start
+        DOM.grid.addEventListener('dragstart', (e) => {
+            const dial = e.target.closest('.dial');
+            if (!dial) return;
+            dragSrcEl = dial;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', dial.innerHTML);
+            dial.classList.add('dragging');
+        });
+
+        // 2. Drag Over
+        DOM.grid.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        });
+
+        // 3. Drop
+        DOM.grid.addEventListener('drop', (e) => {
+            const dial = e.target.closest('.dial'); // Identify which dial we are dropping ON
+            if (!dial) return;
+
+            e.stopPropagation();
+            if (dragSrcEl !== dial) {
+                const oldIndex = parseInt(dragSrcEl.dataset.index);
+                const newIndex = parseInt(dial.dataset.index);
+
+                const activeDials = getActiveDials();
+                // Move the item in the array
+                const item = activeDials.splice(oldIndex, 1)[0];
+                activeDials.splice(newIndex, 0, item);
+
+                saveWorkspaces();
+                renderDials();
+            }
+            return false;
+        });
+
+        // 4. Drag End
+        DOM.grid.addEventListener('dragend', (e) => {
+            // Remove styling from the source element
+            if (dragSrcEl) {
+                dragSrcEl.classList.remove('dragging');
+                dragSrcEl = null;
+            }
+        });
+
+        // 5. Context Menu
+        DOM.grid.addEventListener('contextmenu', (e) => {
+            const dial = e.target.closest('.dial');
+            if (!dial) return;
+            e.preventDefault();
+            const index = parseInt(dial.dataset.index);
+            showContextMenu(e, index);
+        });
+
     }
 
 
@@ -1385,104 +1454,6 @@
 
 
     }
-
-
-
-    // Drag & Drop handlers
-
-    function handleDragStart(e) {
-
-        dragSrcEl = this;
-
-        e.dataTransfer.effectAllowed = 'move';
-
-        e.dataTransfer.setData('text/html', this.innerHTML);
-
-        this.classList.add('dragging');
-
-    }
-
-
-
-    function handleDragOver(e) {
-
-        e.preventDefault();
-
-        e.dataTransfer.dropEffect = 'move';
-
-        return false;
-
-    }
-
-
-
-    function handleDrop(e) {
-
-
-
-        e.stopPropagation();
-
-
-
-        if (dragSrcEl !== this) {
-
-
-
-            const oldIndex = parseInt(dragSrcEl.dataset.index);
-
-
-
-            const newIndex = parseInt(this.dataset.index);
-
-
-
-
-
-
-
-            const activeDials = getActiveDials();
-
-
-
-            const item = activeDials.splice(oldIndex, 1)[0];
-
-
-
-            activeDials.splice(newIndex, 0, item);
-
-
-
-
-
-
-
-            saveWorkspaces();
-
-
-
-            renderDials();
-
-
-
-        }
-
-
-
-        return false;
-
-
-
-    }
-
-
-
-    function handleDragEnd() {
-
-        this.classList.remove('dragging');
-
-    }
-
-
 
     function handleExport() {
 
@@ -1700,7 +1671,9 @@
 
                 const ctx = canvas.getContext('2d');
 
-                const MAX_WIDTH = 1920, MAX_HEIGHT = 1080;
+                const MAX_DIMENSION = 1920;
+
+                const MAX_HEIGHT = 1080;
 
                 let width = img.width, height = img.height;
 
@@ -1708,11 +1681,11 @@
 
                 if (width > height) {
 
-                    if (width > MAX_WIDTH) {
+                    if (width > MAX_DIMENSION) {
 
-                        height *= MAX_WIDTH / width;
+                        height *= MAX_DIMENSION / width;
 
-                        width = MAX_WIDTH;
+                        width = MAX_DIMENSION;
 
                     }
 
