@@ -8,11 +8,11 @@ I created Lightning Links because I wanted a dashboard that felt like a tool, no
 
 For a long time, I was a fan of **Speed Dial 2**. It was great, until it wasn't.
 
-Over time, it started adding features that felt unnecessary for a simple new tab page—things like AI integration (Voila), clocks, notes, and a "focus mode" that actually disrupted muscle memory by shifting the position of the dials. The tool started to feel bloated, and the features began to get in the way of the main idea: speed.
+Over time, it started adding features that felt unnecessary for a simple new tab page, for example, things like AI integration (Voila), clocks, notes, and a "focus mode" that actually disrupted muscle memory by shifting the position of the dials. The tool started to feel bloated, and the features began to get in the way of the main idea: speed.
 
 I also believe that basic customization shouldn't be locked behind a paywall. Changing your background image is a fundamental part of making a browser your own, and it shouldn't be a "Pro" feature.
 
-Lightning Links is my attempt to return to basics. No AI, no subscriptions, no shifting layouts—just your links, exactly where you left them.
+Lightning Links is my attempt to return to basics. No AI, no subscriptions, no shifting layouts, just your links, exactly where you left them.
 
 ## 🚀 Features
 
