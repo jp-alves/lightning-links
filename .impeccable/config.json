@@ -1,0 +1,17 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/41080-1792829565/content/folders.html"
+        ],
+        "createdAt": "2026-10-24T08:13:10.784Z",
+        "reason": "Claude: throwaway brainstorm wireframe, not shipped UI"
+      }
+    ]
+  }
+}
