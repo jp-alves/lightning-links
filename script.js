@@ -604,12 +604,13 @@
             onAdd: () => openAddModal(),
             onClose: () => { openFolderId = null; },
             getFolderEl: () => DOM.grid.querySelector(`[data-key="${CSS.escape('folder:' + folder.id)}"]`),
-            layout: {
+            // Read live, so the panel follows auto-fit when the window is resized
+            layout: () => ({
                 cols: Number(style.getPropertyValue('--col-count')),
                 dialWidth: style.getPropertyValue('--dial-width'),
                 colGap: style.getPropertyValue('--col-gap'),
                 rowGap: style.getPropertyValue('--row-gap')
-            }
+            })
         };
     }
 
