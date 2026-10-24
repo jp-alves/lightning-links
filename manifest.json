@@ -15,7 +15,11 @@
     "storage"
   ],
   "host_permissions": [
-    "https://www.google.com/*"
+    "https://www.google.com/*",
+    "https://*.gstatic.com/*"
+  ],
+  "optional_host_permissions": [
+    "<all_urls>"
   ],
   "offline_enabled": true
 }

@@ -76,7 +76,8 @@
 
         themeOptions: null,
 
-        cacheIconsToggle: null
+        cacheIconsToggle: null,
+        iconCacheStatus: null
 
     };
 
@@ -107,6 +108,7 @@
     ];
 
     let workspaces = {};
+    let iconCache = LL.iconcache.loadCache(localStorage);
 
     let lastActiveWorkspace = 'Home';
 
@@ -217,41 +219,49 @@
         attachEventListeners();
 
         if (settings.cacheIcons) {
-            requestIdleCallback(performIconCaching);
+            requestIdleCallback(refreshIconCache);
         }
 
     }
 
-    async function performIconCaching() {
-        let changed = false;
-        const dials = workspaces[lastActiveWorkspace] || [];
+    // Every unique remote icon URL across all workspaces and folders
+    function collectIconUrls() {
+        const urls = new Set();
+        LL.model.forEachDial(workspaces, dial => {
+            if (dial.img && /^https?:/.test(dial.img)) urls.add(dial.img);
+        });
+        return [...urls];
+    }
 
-        for (let i = 0; i < dials.length; i++) {
-            // OPTIMIZATION #4: Yield control back to the browser
-            // This pauses for 0ms, pushing the next iteration to the end of the event queue.
-            // It allows the UI to remain responsive (clicks/scrolling) between icon conversions.
-            await new Promise(resolve => setTimeout(resolve, 0));
-
-            const dial = dials[i];
-
-            // Check if it's a remote URL (not data:URI)
-            if (dial.img && dial.img.startsWith('http')) {
-                try {
-                    const base64 = await faviconToDataURL(dial.img);
-                    if (base64 && base64.startsWith('data:')) {
-                        dial.img = base64;
-                        changed = true;
-                    }
-                } catch (e) {
-                    console.warn(`Could not cache icon for ${dial.name}`);
-                }
-            }
+    function updateIconCacheStatus(storageFull = false, failed = 0) {
+        if (!settings.cacheIcons) {
+            DOM.iconCacheStatus.textContent = '';
+            return;
         }
-
-        if (changed) {
-            saveWorkspaces();
-            console.log("All icons optimized to local cache.");
+        if (storageFull) {
+            DOM.iconCacheStatus.textContent = 'Storage full — some icons not saved';
+            return;
         }
+        const urls = collectIconUrls();
+        const saved = urls.filter(u => u in iconCache).length;
+        let text = `${saved} of ${urls.length} icons saved for offline`;
+        if (failed) text += ` · ${failed} couldn't be saved`;
+        DOM.iconCacheStatus.textContent = text;
+    }
+
+    async function refreshIconCache() {
+        if (!settings.cacheIcons) return;
+        const result = await LL.iconcache.cacheIcons(collectIconUrls(), iconCache, {
+            fetchFn: (url) => fetch(url),
+            encodeFn: LL.iconcache.encodeBlob,
+            onProgress: (saved, failed) => updateIconCacheStatus(false, failed)
+        });
+        let storageFull = false;
+        if (result.saved) {
+            storageFull = !LL.iconcache.saveCache(localStorage, iconCache);
+            renderDials();
+        }
+        updateIconCacheStatus(storageFull, result.failed);
     }
 
     // Cache all DOM elements at once
@@ -327,6 +337,7 @@
         DOM.workspacesTabs = document.getElementById('workspaces-tabs');
         DOM.themeOptions = document.getElementById('theme-options');
         DOM.cacheIconsToggle = document.getElementById('cache-icons-toggle');
+        DOM.iconCacheStatus = document.getElementById('icon-cache-status');
 
     }
 
@@ -476,7 +487,7 @@
 
             div.innerHTML = `
 
-                        <img src="${dial.img}" loading="lazy" onerror="this.src='icons/icon128.png'" alt="${dial.name}">
+                        <img src="${LL.iconcache.resolveIcon(iconCache, dial.img)}" loading="lazy" onerror="this.src='icons/icon128.png'" alt="${dial.name}">
 
                         <span>${dial.name}</span>
 
@@ -891,12 +902,23 @@
 
         // Cache icons toggle
 
-        DOM.cacheIconsToggle.onchange = (e) => {
-
-            settings.cacheIcons = e.target.checked;
-
+        DOM.cacheIconsToggle.onchange = async (e) => {
+            const enabled = e.target.checked;
+            if (enabled && typeof chrome !== 'undefined' && chrome.permissions) {
+                // Lets custom icons from any site be saved; Google icons work without it
+                try {
+                    await chrome.permissions.request({ origins: ['<all_urls>'] });
+                } catch (err) { }
+            }
+            settings.cacheIcons = enabled;
             saveSettings();
-
+            if (enabled) {
+                refreshIconCache();
+            } else {
+                iconCache = {};
+                localStorage.removeItem(LL.iconcache.KEY);
+                updateIconCacheStatus();
+            }
         };
 
         // Tabs
@@ -1037,46 +1059,6 @@
 
     }
 
-    async function faviconToDataURL(url) {
-        try {
-            // 1. Fetch the image. 
-            // Note: This requires 'host_permissions' in manifest.json to work.
-            const response = await fetch(url);
-            if (!response.ok) throw new Error('Network response was not ok');
-
-            const blob = await response.blob();
-            const objectURL = URL.createObjectURL(blob);
-
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                img.onload = () => {
-                    const canvas = document.createElement('canvas');
-
-                    // 2. Use the actual size of the image (e.g., 128x128)
-                    // instead of forcing 32x32, so icons look sharp.
-                    canvas.width = img.width;
-                    canvas.height = img.height;
-
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0);
-
-                    const dataURL = canvas.toDataURL('image/png');
-                    URL.revokeObjectURL(objectURL);
-                    resolve(dataURL);
-                };
-                img.onerror = () => {
-                    URL.revokeObjectURL(objectURL);
-                    reject(new Error('Failed to load image'));
-                };
-                img.src = objectURL;
-            });
-        } catch (e) {
-            console.warn(`Failed to cache icon from ${url}:`, e);
-            // Fallback: Return original URL so it at least works while online
-            return url;
-        }
-    }
-
     async function handleSave() {
 
         const name = DOM.nameInput.value;
@@ -1105,12 +1087,6 @@
 
         }
 
-        if (settings.cacheIcons && img !== "icons/icon128.png") {
-
-            img = await faviconToDataURL(img);
-
-        }
-
         const dialData = { name, url, img };
 
         const activeDials = getActiveDials();
@@ -1133,11 +1109,13 @@
 
         clearInputs();
 
+        refreshIconCache();
+
     }
 
     function handleExport() {
 
-        const data = { workspaces, lastActiveWorkspace, settings };
+        const data = { workspaces, lastActiveWorkspace, settings, iconCache };
 
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
 
@@ -1178,6 +1156,10 @@
                 else workspaces['Home'] = imported.workspaces.Home; // v1.0 single-list backup goes into Home
                 lastActiveWorkspace = imported.lastActiveWorkspace;
                 settings = imported.settings;
+                if (imported.iconCache) {
+                    iconCache = imported.iconCache;
+                    LL.iconcache.saveCache(localStorage, iconCache);
+                }
                 saveWorkspaces();
                 saveSettings();
                 renderDials();
