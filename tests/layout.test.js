@@ -63,3 +63,19 @@ test('tiny window with one column still never exceeds the width', () => {
     assert.ok(gridWidth(r) <= 120);
     assert.strictEqual(r.scroll, true);
 });
+
+test('few items in a narrow window: the full column count fits the width', () => {
+    for (const availW of [560, 920]) {
+        for (const count of [1, 3]) {
+            const r = computeFit({ ...base, availW, availH: 800, count });
+            assert.ok(gridWidth(r) <= availW, `count ${count} @ ${availW}: ${gridWidth(r)}px`);
+        }
+    }
+});
+
+test('when nothing fits, dials keep their size (only shrunk to the width) and scroll', () => {
+    const r = computeFit({ ...base, availW: 1880, availH: 900, count: 61 });
+    assert.strictEqual(r.cols, 6);
+    assert.strictEqual(r.dialSize, 160);
+    assert.strictEqual(r.scroll, true);
+});

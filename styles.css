@@ -63,7 +63,7 @@ body::before {
 .container {
     display: grid;
     grid-template-columns: repeat(var(--col-count), var(--dial-width));
-    justify-content: center;
+    justify-content: safe center;
     column-gap: var(--col-gap);
     row-gap: var(--row-gap);
     max-width: calc(100vw - 40px);
