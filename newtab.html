@@ -73,6 +73,17 @@
         </form>
     </div>
 
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content sheet confirm-sheet" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+            <h2 id="confirm-title"></h2>
+            <p id="confirm-message" class="confirm-message"></p>
+            <div class="modal-buttons">
+                <button type="button" id="confirm-cancel" class="btn">Cancel</button>
+                <button type="button" id="confirm-ok" class="btn btn-destructive">Delete</button>
+            </div>
+        </div>
+    </div>
+
     <div id="settings-modal" class="modal">
         <div class="modal-content sheet settings-content" role="dialog" aria-modal="true" aria-labelledby="settings-title">
             <h2 id="settings-title">Settings</h2>
@@ -99,7 +110,7 @@
                     </div>
                     <div class="row">
                         <label class="row-label" for="v-gap-range">Vertical spacing</label>
-                        <div class="row-control"><input type="range" id="v-gap-range" min="0" max="100" value="20"><span class="value" id="v-gap-val">20px</span></div>
+                        <div class="row-control"><input type="range" id="v-gap-range" min="-100" max="100" value="20"><span class="value" id="v-gap-val">20px</span></div>
                     </div>
                     <div class="row">
                         <label class="row-label" for="label-range">Name size</label>

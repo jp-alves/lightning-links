@@ -73,6 +73,7 @@
         style.setProperty('--col-count', Math.min(folder.items.length + 1, v.cols, fitCols));
         style.setProperty('--dial-width', v.dialWidth);
         style.setProperty('--cell-width', v.cellWidth);
+        style.setProperty('--row-pull', v.rowPull);
         style.setProperty('--col-gap', v.colGap);
         style.setProperty('--row-gap', v.rowGap);
     }

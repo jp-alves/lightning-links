@@ -110,3 +110,18 @@ test('workspaceNameError: empty, duplicate and unchanged names', () => {
     // Renaming a workspace to its own name (or a case change of it) is fine
     assert.strictEqual(model.workspaceNameError('work', ['Home', 'Work'], 'Work'), null);
 });
+
+test('reorderKeys moves a workspace and keeps every list', () => {
+    const ws = { Home: [A], Work: [B], Study: [C] };
+    const r = model.reorderKeys(ws, 0, 2);
+    assert.deepStrictEqual(Object.keys(r), ['Work', 'Study', 'Home']);
+    assert.deepStrictEqual(r.Home, [A]);
+    assert.deepStrictEqual(Object.keys(model.reorderKeys(ws, 2, 0)), ['Study', 'Home', 'Work']);
+});
+
+test('renameKey keeps the workspace in its place', () => {
+    const ws = { Home: [A], Work: [B], Study: [C] };
+    const r = model.renameKey(ws, 'Home', 'Personal');
+    assert.deepStrictEqual(Object.keys(r), ['Personal', 'Work', 'Study']);
+    assert.deepStrictEqual(r.Personal, [A]);
+});

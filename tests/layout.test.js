@@ -104,3 +104,12 @@ test('cellAspect grows the label block with the name size', () => {
     assert.strictEqual(cellAspect(160, 100), cellAspect(160));
     assert.ok(cellAspect(160, 200) < cellAspect(160, 100), 'bigger names make cells taller');
 });
+
+test('negative vertical spacing makes rows overlap instead of shrinking the icons', () => {
+    // 2 rows of cells 160 / (160/122) = 122px tall with -40 spacing: 2 * 82 = 164px
+    const aspect = 160 / 122;
+    const fits = computeFit({ ...base, rowGap: -40, aspect, availW: 1600, availH: 170, count: 12 });
+    assert.strictEqual(fits.dialSize, 160);
+    assert.strictEqual(fits.rowGap, -40);
+    assert.strictEqual(fits.scroll, false);
+});

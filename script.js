@@ -94,6 +94,11 @@
         workspaceError: null,
         workspaceSave: null,
         workspaceCancel: null,
+        confirmModal: null,
+        confirmTitle: null,
+        confirmMessage: null,
+        confirmOk: null,
+        confirmCancel: null,
         autoFitToggle: null,
         workspacesContainer: null,
         iconCacheStatus: null
@@ -195,14 +200,12 @@
                 workspaces = JSON.parse(savedWorkspaces);
 
                 lastActiveWorkspace = localStorage.getItem('lastActiveWorkspace') || 'Home';
-
             } else {
-
                 workspaces['Home'] = defaultDials;
-
             }
-
         }
+        // Home can be renamed or deleted: fall back to the first workspace there is
+        if (!workspaces[lastActiveWorkspace]) lastActiveWorkspace = Object.keys(workspaces)[0];
 
     }
 
@@ -401,6 +404,11 @@
         DOM.workspaceError = document.getElementById('workspace-error');
         DOM.workspaceSave = document.getElementById('workspace-save');
         DOM.workspaceCancel = document.getElementById('workspace-cancel');
+        DOM.confirmModal = document.getElementById('confirm-modal');
+        DOM.confirmTitle = document.getElementById('confirm-title');
+        DOM.confirmMessage = document.getElementById('confirm-message');
+        DOM.confirmOk = document.getElementById('confirm-ok');
+        DOM.confirmCancel = document.getElementById('confirm-cancel');
         DOM.autoFitToggle = document.getElementById('autofit-toggle');
         DOM.workspacesContainer = document.getElementById('workspaces-container');
         DOM.iconCacheStatus = document.getElementById('icon-cache-status');
@@ -516,8 +524,11 @@
         style.setProperty('--dial-width', fit.dialSize + 'px');
         style.setProperty('--cell-width', cellWidth + 'px');
         style.setProperty('--col-gap', Math.max(fit.colGap, 0) + 'px');
+        // Negative vertical spacing pulls each row up, at most 70% of a row, so icons stay distinct
+        const rowHeight = fit.dialSize / LL.layout.cellAspect(fit.dialSize, labelScale());
+        style.setProperty('--row-pull', Math.max(Math.min(fit.rowGap, 0), -Math.round(rowHeight * 0.7)) + 'px');
         document.documentElement.style.setProperty('--label-scale', labelScale() / 100);
-        style.setProperty('--row-gap', fit.rowGap + 'px');
+        style.setProperty('--row-gap', Math.max(fit.rowGap, 0) + 'px');
     }
 
     let resizeFrame = 0;
@@ -650,6 +661,7 @@
                 cols: Number(style.getPropertyValue('--col-count')),
                 dialWidth: style.getPropertyValue('--dial-width'),
                 cellWidth: style.getPropertyValue('--cell-width'),
+                rowPull: style.getPropertyValue('--row-pull'),
                 colGap: style.getPropertyValue('--col-gap'),
                 rowGap: style.getPropertyValue('--row-gap')
             })
@@ -715,9 +727,11 @@
 
     function showWorkspaceContextMenu(e, workspaceName) {
 
-        if (workspaceName === 'Home') return; // Don't allow context menu on Home
-
         contextWorkspaceName = workspaceName;
+        // The last workspace can be renamed but not deleted
+        const lastOne = Object.keys(workspaces).length <= 1;
+        DOM.ctxDeleteWorkspace.hidden = lastOne;
+        DOM.ctxDeleteWorkspace.previousElementSibling.hidden = lastOne;
 
         DOM.workspaceContextMenu.style.display = 'block';
 
@@ -780,11 +794,10 @@
 
             delBtn.title = 'Remove custom background';
 
-            delBtn.onclick = (e) => {
-
+            delBtn.onclick = async (e) => {
                 e.stopPropagation();
-
-                if (confirm('Remove this custom background?')) {
+                const ok = await askConfirm({ title: 'Remove your picture?', message: 'The wallpaper goes back to the default.', confirmLabel: 'Remove' });
+                if (ok) {
                     localStorage.removeItem('bgImage');
                     customBg = null;
                     settings.bgImage = 'backgrounds/bg1.jpg';
@@ -907,43 +920,25 @@
             DOM.workspaceError.textContent = '';
         });
         DOM.workspaceCancel.onclick = closeWorkspaceSheet;
+        DOM.confirmOk.onclick = () => closeConfirm(true);
+        DOM.confirmCancel.onclick = () => closeConfirm(false);
 
-        DOM.ctxDeleteWorkspace.onclick = () => {
-
-            if (!contextWorkspaceName) return;
-
-            if (Object.keys(workspaces).length <= 1) {
-
-                alert("You cannot delete the last workspace.");
-
-                DOM.workspaceContextMenu.style.display = 'none';
-
-                return;
-
-            }
-
-            if (confirm(`Are you sure you want to delete the "${contextWorkspaceName}" workspace and all its links?`)) {
-
-                delete workspaces[contextWorkspaceName];
-
-                // If we deleted the active workspace, switch to Home
-
-                if (lastActiveWorkspace === contextWorkspaceName) {
-
-                    lastActiveWorkspace = 'Home';
-
-                }
-
-                saveWorkspaces();
-
-                renderWorkspacesTabs();
-
-                renderDials();
-
-            }
-
+        DOM.ctxDeleteWorkspace.onclick = async () => {
             DOM.workspaceContextMenu.style.display = 'none';
-
+            const name = contextWorkspaceName;
+            if (!name || Object.keys(workspaces).length <= 1) return;
+            const count = countLinks(workspaces[name]);
+            const ok = await askConfirm({
+                title: `Delete “${name}”?`,
+                message: count ? `Its ${count} link${count === 1 ? '' : 's'} will be deleted too.` : 'This workspace is empty.'
+            });
+            if (!ok) return;
+            delete workspaces[name];
+            // If we deleted the active workspace, switch to the first one left
+            if (lastActiveWorkspace === name) lastActiveWorkspace = Object.keys(workspaces)[0];
+            saveWorkspaces();
+            renderWorkspacesTabs();
+            renderDials();
         };
 
         // Context menu: Open in New Tab
@@ -1000,10 +995,10 @@
 
         };
 
-        DOM.ctxDelete.onclick = () => {
-
-            if (contextTarget && confirm(`Delete ${targetDial(contextTarget).name}?`)) {
-                const target = contextTarget;
+        DOM.ctxDelete.onclick = async () => {
+            DOM.contextMenu.style.display = 'none';
+            const target = contextTarget;
+            if (target && await askConfirm({ title: `Delete “${targetDial(target).name}”?`, message: 'You can add it again later with +.' })) {
                 const container = target.childIndex > -1 ? LL.folderPanel.gridEl() : DOM.grid;
                 const el = container.querySelector(`.dial[data-index="${target.childIndex > -1 ? target.childIndex : target.index}"]`);
                 const remove = () => {
@@ -1165,12 +1160,14 @@
             if (e.target === DOM.addModal) DOM.addModal.style.display = 'none';
             if (e.target === DOM.settingsModal) DOM.settingsModal.style.display = 'none';
             if (e.target === DOM.workspaceModal) closeWorkspaceSheet();
+            if (e.target === DOM.confirmModal) closeConfirm(false);
         };
 
         // Esc closes whichever sheet is open, like Cancel
         document.addEventListener('keydown', (e) => {
             if (e.key !== 'Escape') return;
-            if (DOM.workspaceModal.style.display === 'flex') closeWorkspaceSheet();
+            if (DOM.confirmModal.style.display === 'flex') closeConfirm(false);
+            else if (DOM.workspaceModal.style.display === 'flex') closeWorkspaceSheet();
             else if (DOM.addModal.style.display === 'flex') DOM.cancelBtn.click();
             else if (DOM.settingsModal.style.display === 'flex') DOM.settingsModal.style.display = 'none';
         });
@@ -1194,6 +1191,17 @@
                     saveWorkspaces();
                     renderDials();
                 });
+            }
+        });
+
+        // Workspace tabs: drag along the bar to reorder them
+        LL.drag.attach(DOM.workspacesTabs, {
+            itemSelector: '.workspace-tab:not(#add-workspace-btn)',
+            canGroup: () => false,
+            onReorder: (from, to) => {
+                workspaces = LL.model.reorderKeys(workspaces, from, to);
+                saveWorkspaces();
+                renderWorkspacesTabs();
             }
         });
 
@@ -1277,18 +1285,46 @@
                 renderDials();
             });
         };
-        DOM.ctxFolderDelete.onclick = () => {
+        DOM.ctxFolderDelete.onclick = async () => {
             hideFolderMenu();
-            const folder = getActiveDials()[contextFolderIndex];
+            const index = contextFolderIndex;
+            const folder = getActiveDials()[index];
             const n = folder.items.length;
-            if (!confirm(`Delete folder "${folder.name}" and its ${n} link${n === 1 ? '' : 's'}?`)) return;
+            const ok = await askConfirm({
+                title: `Delete folder “${folder.name}”?`,
+                message: `Its ${n} link${n === 1 ? '' : 's'} will be deleted too. To keep them, choose Ungroup instead.`
+            });
+            if (!ok || getActiveDials()[index] !== folder) return;
             LL.flip.flip(DOM.grid, '.dial', () => {
-                getActiveDials().splice(contextFolderIndex, 1);
+                getActiveDials().splice(index, 1);
                 saveWorkspaces();
                 renderDials();
             });
         };
 
+    }
+
+    // --- Delete confirmations: a frosted sheet with Cancel (default) and a red action ---
+    let confirmResolve = null;
+
+    function askConfirm({ title, message, confirmLabel = 'Delete' }) {
+        DOM.confirmTitle.textContent = title;
+        DOM.confirmMessage.textContent = message;
+        DOM.confirmOk.textContent = confirmLabel;
+        DOM.confirmModal.style.display = 'flex';
+        DOM.confirmCancel.focus();
+        return new Promise(resolve => { confirmResolve = resolve; });
+    }
+
+    function closeConfirm(result) {
+        DOM.confirmModal.style.display = 'none';
+        if (confirmResolve) confirmResolve(result);
+        confirmResolve = null;
+    }
+
+    // Links in a workspace, counting the ones inside folders
+    function countLinks(items) {
+        return items.reduce((n, item) => n + (LL.model.isFolder(item) ? item.items.length : 1), 0);
     }
 
     // --- Workspace sheet: create (renaming = null) or rename a workspace ---
@@ -1320,8 +1356,7 @@
         }
         if (renamingWorkspace) {
             if (name !== renamingWorkspace) {
-                workspaces[name] = workspaces[renamingWorkspace];
-                delete workspaces[renamingWorkspace];
+                workspaces = LL.model.renameKey(workspaces, renamingWorkspace, name);
                 if (lastActiveWorkspace === renamingWorkspace) lastActiveWorkspace = name;
             }
         } else {
