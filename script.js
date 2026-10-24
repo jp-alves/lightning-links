@@ -202,12 +202,27 @@
 
     }
 
+    // Links matter more than cached icons: when storage is full, the icon cache makes room
     function saveWorkspaces() {
-
-        localStorage.setItem('myWorkspaces', JSON.stringify(workspaces));
-
-        localStorage.setItem('lastActiveWorkspace', lastActiveWorkspace);
-
+        const result = LL.storage.writeAll(localStorage, [
+            ['myWorkspaces', JSON.stringify(workspaces)],
+            ['lastActiveWorkspace', lastActiveWorkspace]
+        ], [LL.iconcache.KEY]);
+        if (result === 'evicted') {
+            iconCache = {};
+            if (DOM.iconCacheStatus) updateIconCacheStatus(true);
+        } else if (result === 'full') {
+            alert('Storage full — your last change could not be saved.');
+            // Show what is actually stored
+            try {
+                workspaces = JSON.parse(localStorage.getItem('myWorkspaces')) || workspaces;
+            } catch (e) { }
+            if (DOM.grid) {
+                renderWorkspacesTabs();
+                renderDials();
+            }
+        }
+        return result !== 'full';
     }
 
     // Initialize on DOM ready
@@ -1381,46 +1396,63 @@
         const reader = new FileReader();
 
         reader.onload = function (event) {
-
+            let data = null;
+            let imported = null;
             try {
-
-                const data = JSON.parse(event.target.result);
-                const imported = LL.model.normalizeImport(data);
-                if (!imported) throw new Error('Unrecognised backup');
-                if (data.workspaces) workspaces = imported.workspaces;
-                else workspaces['Home'] = imported.workspaces.Home; // v1.0 single-list backup goes into Home
-                lastActiveWorkspace = imported.lastActiveWorkspace;
-                settings = imported.settings;
-                // v1.0 backups carry the custom background inside settings
-                const importedBg = imported.bgImage ||
-                    (settings.bgImage && settings.bgImage.startsWith('data:') ? settings.bgImage : null);
-                if (importedBg) {
-                    try {
-                        localStorage.setItem('bgImage', importedBg);
-                        customBg = importedBg;
-                        settings.bgImage = 'custom';
-                    } catch (err) {
-                        settings.bgImage = 'backgrounds/bg1.jpg';
-                    }
-                } else if (settings.bgImage === 'custom' && !customBg) {
-                    settings.bgImage = 'backgrounds/bg1.jpg';
-                }
-                if (imported.iconCache) {
-                    iconCache = imported.iconCache;
-                    LL.iconcache.saveCache(localStorage, iconCache);
-                }
-                saveWorkspaces();
-                saveSettings();
-                renderDials();
-                renderBackgroundOptions();
-                renderWorkspacesTabs();
-                alert("Import successful!");
-            } catch (err) {
-
+                data = JSON.parse(event.target.result);
+                imported = LL.model.normalizeImport(data);
+            } catch (err) { }
+            if (!imported) {
                 alert("Error reading file.");
-
+                return;
             }
 
+            const nextWorkspaces = data.workspaces
+                ? imported.workspaces
+                : Object.assign({}, workspaces, { Home: imported.workspaces.Home }); // v1.0 single-list backup goes into Home
+            const nextSettings = imported.settings;
+            // v1.0 backups carry the custom background inside settings
+            const importedBg = imported.bgImage ||
+                (nextSettings.bgImage && String(nextSettings.bgImage).startsWith('data:') ? nextSettings.bgImage : null);
+            if (importedBg) nextSettings.bgImage = 'custom';
+            else if (nextSettings.bgImage === 'custom' && !customBg) nextSettings.bgImage = 'backgrounds/bg1.jpg';
+
+            const core = [
+                ['myWorkspaces', JSON.stringify(nextWorkspaces)],
+                ['lastActiveWorkspace', imported.lastActiveWorkspace],
+                ['mySettings', JSON.stringify(nextSettings)]
+            ];
+            const extras = [];
+            if (importedBg) extras.push(['bgImage', importedBg]);
+            if (imported.iconCache) extras.push([LL.iconcache.KEY, JSON.stringify(imported.iconCache)]);
+
+            // Everything at once; if that doesn't fit, the links and settings alone (icons make room)
+            let note = '';
+            let result = LL.storage.writeAll(localStorage, core.concat(extras));
+            let extrasSaved = result === 'ok';
+            if (!extrasSaved) {
+                if (importedBg) nextSettings.bgImage = 'backgrounds/bg1.jpg';
+                core[2][1] = JSON.stringify(nextSettings);
+                result = LL.storage.writeAll(localStorage, core, [LL.iconcache.KEY]);
+                if (result === 'full') {
+                    alert("Storage full — backup not imported. Nothing was changed.");
+                    return;
+                }
+                note = importedBg ? ' (the background image was too large to keep)' : ' (saved icons were not restored)';
+            }
+
+            // Storage is written: now switch the page over
+            workspaces = nextWorkspaces;
+            lastActiveWorkspace = imported.lastActiveWorkspace;
+            settings = nextSettings;
+            if (extrasSaved && importedBg) customBg = importedBg;
+            if (extrasSaved && imported.iconCache) iconCache = imported.iconCache;
+            else if (result === 'evicted') iconCache = {};
+            applySettings();
+            renderDials();
+            renderBackgroundOptions();
+            renderWorkspacesTabs();
+            alert("Import successful!" + note);
         };
 
         reader.readAsText(file);

@@ -88,3 +88,17 @@ test('normalizeImport rejects unknown shapes', () => {
     assert.strictEqual(model.normalizeImport({ foo: 1 }), null);
     assert.strictEqual(model.normalizeImport(null), null);
 });
+
+test('normalizeImport rejects malformed workspaces instead of saving them', () => {
+    assert.strictEqual(model.normalizeImport({ workspaces: { Home: 'nope' }, settings: {} }), null);
+    assert.strictEqual(model.normalizeImport({ workspaces: { Home: [{ type: 'folder', id: 'f', name: 'F' }] }, settings: {} }), null);
+    assert.strictEqual(model.normalizeImport({ workspaces: { Home: [{ name: 'no url' }] }, settings: {} }), null);
+    assert.strictEqual(model.normalizeImport({ workspaces: { Home: [{ type: 'folder', id: 'f', name: 'F', items: [{ type: 'folder', id: 'g', name: 'G', items: [] }] }] }, settings: {} }), null);
+    assert.strictEqual(model.normalizeImport({ dials: [null], settings: {} }), null);
+});
+
+test('normalizeImport accepts folders with dial items', () => {
+    const f = { type: 'folder', id: 'f', name: 'F', items: [A, B] };
+    const r = model.normalizeImport({ workspaces: { Home: [f, C] }, settings: {} });
+    assert.deepStrictEqual(r.workspaces.Home, [f, C]);
+});

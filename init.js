@@ -12,12 +12,23 @@
         settings = saved ? JSON.parse(saved) : null;
         customBg = localStorage.getItem('bgImage');
 
-        // One-time move: custom backgrounds used to live inside mySettings, making it heavy to parse
+        // One-time move: custom backgrounds used to live inside mySettings, making it heavy to parse.
+        // Settings only switch to 'custom' once both writes succeeded; on a full storage the
+        // background simply stays where it was (and still works).
         if (settings && settings.bgImage && settings.bgImage.startsWith('data:')) {
-            customBg = settings.bgImage;
-            settings.bgImage = 'custom';
-            localStorage.setItem('bgImage', customBg);
-            localStorage.setItem('mySettings', JSON.stringify(settings));
+            const dataUrl = settings.bgImage;
+            const previous = localStorage.getItem('bgImage');
+            try {
+                localStorage.setItem('bgImage', dataUrl);
+                localStorage.setItem('mySettings', JSON.stringify(Object.assign({}, settings, { bgImage: 'custom' })));
+                settings.bgImage = 'custom';
+                customBg = dataUrl;
+            } catch (e) {
+                try {
+                    if (previous === null) localStorage.removeItem('bgImage');
+                    else localStorage.setItem('bgImage', previous);
+                } catch (e2) { }
+            }
         }
 
         // 1. Determine the correct background immediately
