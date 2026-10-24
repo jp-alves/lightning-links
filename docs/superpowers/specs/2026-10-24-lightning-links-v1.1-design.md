@@ -180,7 +180,7 @@ The owner chose "a mix of reflow and shrink" and approved this behavior; it can 
 - When the window is too small to show every item without scrolling:
   1. **Shrink first.** Scale the dial size and gaps together, keeping the column count, so positions stay put.
   2. **Reflow when needed.** If the scale would drop below **60%** of the chosen dial size, reduce the column count one step at a time and recompute.
-  3. **Pick the best fit.** Use the layout that fits all items at the largest scale. If none fits even at 60% with one column, use the user's column count at 60% scale and let the grid scroll.
+  3. **Keep as many columns as possible.** Use the first column count, stepping down from the user's, that fits all items at 60% or more, at the largest scale that count allows. If none fits even at 60% with one column, use the user's column count at 60% scale and let the grid scroll.
 - Items counted are the top-level items of the active workspace (folders count as one), plus the "+" button.
 - Recompute on `resize` (throttled with rAF), on workspace switch, and on add or delete.
 - Apply the result by setting `--col-count`, `--dial-width` and the gaps on the grid element only. The user's saved settings are never overwritten.
