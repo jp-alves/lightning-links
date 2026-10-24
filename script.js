@@ -92,6 +92,7 @@
         workspaceTitle: null,
         workspaceName: null,
         workspaceError: null,
+        siteError: null,
         workspaceSave: null,
         workspaceCancel: null,
         confirmModal: null,
@@ -229,7 +230,7 @@
             iconCache = {};
             if (DOM.iconCacheStatus) updateIconCacheStatus(true);
         } else if (result === 'full') {
-            alert('Storage full — your last change could not be saved.');
+            showNotice({ title: 'Change not saved', message: 'There isn’t enough storage space for your last change.' });
             // Show what is actually stored
             try {
                 workspaces = JSON.parse(localStorage.getItem('myWorkspaces')) || workspaces;
@@ -408,6 +409,7 @@
         DOM.workspaceTitle = document.getElementById('workspace-title');
         DOM.workspaceName = document.getElementById('workspace-name');
         DOM.workspaceError = document.getElementById('workspace-error');
+        DOM.siteError = document.getElementById('site-error');
         DOM.workspaceSave = document.getElementById('workspace-save');
         DOM.workspaceCancel = document.getElementById('workspace-cancel');
         DOM.confirmModal = document.getElementById('confirm-modal');
@@ -883,6 +885,10 @@
         };
 
         DOM.saveBtn.onclick = handleSave;
+        // Clear the message as soon as a field changes; it is re-checked on save
+        [DOM.urlInput, DOM.nameInput].forEach(input => input.addEventListener('input', () => {
+            DOM.siteError.textContent = '';
+        }));
 
         // Any press outside a menu closes it (clicks swallowed after a drag never reach 'click')
         document.addEventListener('pointerdown', (e) => {
@@ -992,6 +998,8 @@
                 DOM.nameInput.value = dial.name;
 
                 DOM.imgInput.value = dial.img;
+
+                DOM.siteError.textContent = '';
 
                 DOM.addModal.style.display = 'flex';
 
@@ -1405,6 +1413,8 @@
 
         DOM.imgInput.value = '';
 
+        DOM.siteError.textContent = '';
+
     }
 
     async function handleSave() {
@@ -1415,7 +1425,11 @@
 
         let img = DOM.imgInput.value;
 
-        if (!name || !url) return alert("Name and URL required!");
+        if (!name || !url) {
+            DOM.siteError.textContent = url ? 'Enter a name.' : 'Enter a URL.';
+            (url ? DOM.nameInput : DOM.urlInput).focus();
+            return;
+        }
 
         if (!url.startsWith('http')) url = 'https://' + url;
 
@@ -1618,7 +1632,7 @@
                 try {
                     localStorage.setItem('bgImage', optimizedDataUrl);
                 } catch (err) {
-                    alert("Storage full — image too large");
+                    showNotice({ title: 'Picture too large', message: 'There isn’t enough storage space for this picture. Try a smaller file.' });
                     return;
                 }
                 customBg = optimizedDataUrl;
