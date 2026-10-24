@@ -124,6 +124,7 @@ body::before {
 
 @media (prefers-reduced-motion: reduce) {
     .dial,
+    .folder-name,
     .container.resizing {
         transition-duration: 1ms !important;
         animation-duration: 1ms !important;
@@ -171,6 +172,134 @@ body::before {
     box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.9), 0 12px 28px rgba(0, 0, 0, 0.3);
     scale: 1.08;
     transition: scale 150ms ease-out, box-shadow 150ms ease-out, transform 200ms cubic-bezier(.2, .7, .3, 1);
+}
+
+/* --- FOLDERS --- */
+.dial.folder {
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18), inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+}
+
+.dial.folder span {
+    color: #333;
+}
+
+.dark-mode .dial.folder span {
+    color: #f2f2f2;
+}
+
+.folder-preview {
+    display: grid;
+    grid-template-columns: repeat(2, 28%);
+    grid-auto-rows: auto;
+    gap: 6% 8%;
+    justify-content: center;
+    align-content: center;
+    width: 100%;
+    flex: 1;
+    min-height: 0;
+}
+
+.folder-preview img {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: contain;
+    border-radius: 4px;
+    pointer-events: none;
+}
+
+.dark-mode .dial.folder {
+    background: rgba(30, 30, 30, 0.45);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
+}
+
+/* Opened folder: blurred page behind a frosted panel */
+.folder-layer {
+    position: fixed;
+    inset: 0;
+    z-index: 150;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.folder-layer[hidden] {
+    display: none;
+}
+
+.folder-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+.folder-wrap {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    max-width: calc(100vw - 40px);
+    transform-origin: center;
+}
+
+input.folder-name {
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font: 700 24px 'Segoe UI', sans-serif;
+    text-align: center;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    padding: 4px 10px;
+    width: min(420px, 80vw);
+    outline: none;
+    transition: background 150ms ease-out;
+}
+
+.dark-mode input.folder-name[type="text"] {
+    background: transparent;
+    border: none;
+    color: #fff;
+}
+
+input.folder-name:hover,
+input.folder-name:focus {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.dark-mode input.folder-name[type="text"]:hover,
+.dark-mode input.folder-name[type="text"]:focus {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.folder-panel {
+    background: rgba(255, 255, 255, 0.25);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-radius: 22px;
+    padding: 22px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.dark-mode .folder-panel {
+    background: rgba(30, 30, 30, 0.45);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.folder-grid {
+    display: grid;
+    grid-template-columns: repeat(var(--col-count), var(--dial-width));
+    column-gap: var(--col-gap);
+    row-gap: var(--row-gap);
+    max-height: 70vh;
+    overflow-y: auto;
+    scrollbar-width: none;
+    padding: 6px;
 }
 
 /* --- ADD BUTTON --- */

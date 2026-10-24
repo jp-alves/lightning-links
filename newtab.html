@@ -130,6 +130,23 @@
         <div class="context-menu-item delete" id="ctx-delete">Delete</div>
     </div>
 
+    <div id="folder-context-menu" class="context-menu">
+        <div class="context-menu-item" id="ctx-folder-rename">Rename</div>
+        <div class="context-menu-item" id="ctx-folder-openall">Open All in New Tabs</div>
+        <div class="context-menu-item" id="ctx-folder-ungroup">Ungroup</div>
+        <div class="context-menu-item delete" id="ctx-folder-delete">Delete</div>
+    </div>
+
+    <div id="folder-layer" class="folder-layer" hidden>
+        <div id="folder-backdrop" class="folder-backdrop"></div>
+        <div id="folder-wrap" class="folder-wrap" role="dialog" aria-modal="true" aria-label="Folder">
+            <input id="folder-name" class="folder-name" type="text" maxlength="40" aria-label="Folder name">
+            <div class="folder-panel">
+                <div id="folder-grid" class="folder-grid"></div>
+            </div>
+        </div>
+    </div>
+
     <div id="workspace-context-menu" class="context-menu">
         <div class="context-menu-item" id="ctx-edit-workspace">Edit Name</div>
         <div class="context-menu-item delete" id="ctx-delete-workspace">Delete</div>
@@ -143,6 +160,7 @@
     <script src="lib/flip.js"></script>
     <script src="lib/dragmath.js"></script>
     <script src="ui/drag.js"></script>
+    <script src="ui/folder-panel.js"></script>
     <script src="script.js"></script>
 </body>
 

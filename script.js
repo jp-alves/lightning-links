@@ -38,6 +38,11 @@
         ctxDelete: null,
 
         workspaceContextMenu: null,
+        folderContextMenu: null,
+        ctxFolderRename: null,
+        ctxFolderOpenAll: null,
+        ctxFolderUngroup: null,
+        ctxFolderDelete: null,
 
         ctxEditWorkspace: null,
 
@@ -88,9 +93,13 @@
 
     // State
 
-    let editingIndex = -1;
+    // Which dial the add/edit modal and the context menu act on:
+    // { index, childIndex } where childIndex > -1 means inside the folder at `index`
+    let editingTarget = null;
 
-    let contextIndex = -1;
+    let contextTarget = null;
+    let contextFolderIndex = -1;
+    let openFolderId = null;
 
     let contextWorkspaceName = null;
 
@@ -310,6 +319,11 @@
         DOM.ctxDelete = document.getElementById('ctx-delete');
 
         DOM.workspaceContextMenu = document.getElementById('workspace-context-menu');
+        DOM.folderContextMenu = document.getElementById('folder-context-menu');
+        DOM.ctxFolderRename = document.getElementById('ctx-folder-rename');
+        DOM.ctxFolderOpenAll = document.getElementById('ctx-folder-openall');
+        DOM.ctxFolderUngroup = document.getElementById('ctx-folder-ungroup');
+        DOM.ctxFolderDelete = document.getElementById('ctx-folder-delete');
 
         DOM.ctxEditWorkspace = document.getElementById('ctx-edit-workspace');
 
@@ -491,48 +505,125 @@
 
     // Optimized render using DocumentFragment
 
-    function renderDials() {
+    function buildDialEl(dial, index, key) {
+        const div = document.createElement('a');
+        div.className = 'dial';
+        div.href = dial.url;
+        div.draggable = false;
+        div.dataset.index = index;
+        div.dataset.key = key;
+        const img = document.createElement('img');
+        img.src = LL.iconcache.resolveIcon(iconCache, dial.img);
+        img.decoding = 'async';
+        img.alt = dial.name;
+        img.onerror = () => { img.onerror = null; img.src = 'icons/icon128.png'; };
+        const label = document.createElement('span');
+        label.textContent = dial.name;
+        div.append(img, label);
+        return div;
+    }
 
-        const items = document.querySelectorAll('.dial:not(#add-btn)');
-
-        items.forEach(el => el.remove());
-
-        const fragment = document.createDocumentFragment();
-
-        const dials = getActiveDials();
-        const seen = {};
-        dials.forEach((dial, index) => {
-
-            const div = document.createElement('a');
-
-            div.className = 'dial';
-
-            div.href = dial.url;
-
-            div.draggable = false;
-
-            div.dataset.index = index;
-            // Stable identity across re-renders, for FLIP animations
-            seen[dial.url] = (seen[dial.url] || 0) + 1;
-            div.dataset.key = dial.url + '#' + seen[dial.url];
-
+    function buildFolderEl(folder, index) {
+        const div = document.createElement('div');
+        div.className = 'dial folder';
+        div.dataset.index = index;
+        div.dataset.key = 'folder:' + folder.id;
+        div.tabIndex = 0;
+        const preview = document.createElement('div');
+        preview.className = 'folder-preview';
+        folder.items.slice(0, 4).forEach(dial => {
             const img = document.createElement('img');
             img.src = LL.iconcache.resolveIcon(iconCache, dial.img);
             img.decoding = 'async';
-            img.alt = dial.name;
+            img.alt = '';
             img.onerror = () => { img.onerror = null; img.src = 'icons/icon128.png'; };
-            const label = document.createElement('span');
-            label.textContent = dial.name;
-            div.append(img, label);
-
-            fragment.appendChild(div);
-
+            preview.appendChild(img);
         });
+        const label = document.createElement('span');
+        label.textContent = folder.name;
+        div.append(preview, label);
+        return div;
+    }
 
+    // Stable identity across re-renders (for FLIP): url plus occurrence count
+    function keyMaker() {
+        const seen = {};
+        return (dial) => {
+            seen[dial.url] = (seen[dial.url] || 0) + 1;
+            return dial.url + '#' + seen[dial.url];
+        };
+    }
+
+    // Optimized render using DocumentFragment
+    function renderDials() {
+        DOM.grid.querySelectorAll('.dial:not(#add-btn)').forEach(el => el.remove());
+        const fragment = document.createDocumentFragment();
+        const key = keyMaker();
+        getActiveDials().forEach((item, index) => {
+            fragment.appendChild(LL.model.isFolder(item) ? buildFolderEl(item, index) : buildDialEl(item, index, key(item)));
+        });
         DOM.grid.insertBefore(fragment, DOM.addBtn);
-
         applyLayoutVars();
+        renderFolderPanel();
+    }
 
+    // --- Folders ---
+
+    function getOpenFolder() {
+        if (!openFolderId) return null;
+        const items = getActiveDials();
+        const index = items.findIndex(item => LL.model.isFolder(item) && item.id === openFolderId);
+        return index > -1 ? { folder: items[index], index } : null;
+    }
+
+    function folderPanelOptions(folder) {
+        const style = DOM.grid.style;
+        return {
+            renderItem: (() => { const key = keyMaker(); return (dial, i) => buildDialEl(dial, i, key(dial)); })(),
+            onRename: (name) => {
+                folder.name = name;
+                saveWorkspaces();
+                renderDials();
+            },
+            onAdd: () => openAddModal(),
+            onClose: () => { openFolderId = null; },
+            getFolderEl: () => DOM.grid.querySelector(`[data-key="${CSS.escape('folder:' + folder.id)}"]`),
+            layout: {
+                cols: Number(style.getPropertyValue('--col-count')),
+                dialWidth: style.getPropertyValue('--dial-width'),
+                colGap: style.getPropertyValue('--col-gap'),
+                rowGap: style.getPropertyValue('--row-gap')
+            }
+        };
+    }
+
+    function openFolder(index) {
+        const folder = getActiveDials()[index];
+        const el = DOM.grid.querySelector(`.dial[data-index="${index}"]`);
+        openFolderId = folder.id;
+        LL.folderPanel.open(el, folder, folderPanelOptions(folder));
+    }
+
+    // Keep the open panel in sync after any change; close it if its folder dissolved
+    function renderFolderPanel() {
+        if (!LL.folderPanel.isOpen()) return;
+        const open = getOpenFolder();
+        if (!open) {
+            LL.folderPanel.close(true);
+            return;
+        }
+        LL.folderPanel.refresh(open.folder);
+    }
+
+    // The list holding a target dial (top level or a folder's items) and its position in it
+    function targetList(target) {
+        const items = getActiveDials();
+        return target.childIndex > -1 ? [items[target.index].items, target.childIndex] : [items, target.index];
+    }
+
+    function targetDial(target) {
+        const [list, i] = targetList(target);
+        return list[i];
     }
 
     let toastTimer = 0;
@@ -545,9 +636,8 @@
 
     // Context menu logic
 
-    function showContextMenu(e, index) {
-
-        contextIndex = index;
+    function showContextMenu(e, target) {
+        contextTarget = target;
 
         DOM.contextMenu.style.display = 'block';
 
@@ -555,6 +645,13 @@
 
         DOM.contextMenu.style.top = e.pageY + 'px';
 
+    }
+
+    function showFolderContextMenu(e, index) {
+        contextFolderIndex = index;
+        DOM.folderContextMenu.style.display = 'block';
+        DOM.folderContextMenu.style.left = e.pageX + 'px';
+        DOM.folderContextMenu.style.top = e.pageY + 'px';
     }
 
     function showWorkspaceContextMenu(e, workspaceName) {
@@ -728,17 +825,7 @@
 
         // Modal controls
 
-        DOM.addBtn.onclick = () => {
-
-            editingIndex = -1;
-
-            DOM.modalTitle.textContent = "Add New Website";
-
-            clearInputs();
-
-            DOM.addModal.style.display = 'flex';
-
-        };
+        DOM.addBtn.onclick = openAddModal;
 
         DOM.cancelBtn.onclick = () => {
 
@@ -761,9 +848,10 @@
             }
 
             if (!DOM.workspaceContextMenu.contains(e.target)) {
-
                 DOM.workspaceContextMenu.style.display = 'none';
-
+            }
+            if (!DOM.folderContextMenu.contains(e.target)) {
+                DOM.folderContextMenu.style.display = 'none';
             }
 
         });
@@ -852,12 +940,8 @@
 
         DOM.ctxNewTab.onclick = () => {
 
-            if (contextIndex > -1) {
-
-                const url = getActiveDials()[contextIndex].url;
-
-                window.open(url, '_blank');
-
+            if (contextTarget) {
+                window.open(targetDial(contextTarget).url, '_blank');
             }
 
             DOM.contextMenu.style.display = 'none';
@@ -865,17 +949,17 @@
         };
 
         DOM.ctxIncognito.onclick = () => {
-            if (contextIndex > -1 && typeof chrome !== 'undefined' && chrome.windows) {
-                chrome.windows.create({ url: getActiveDials()[contextIndex].url, incognito: true });
+            if (contextTarget && typeof chrome !== 'undefined' && chrome.windows) {
+                chrome.windows.create({ url: targetDial(contextTarget).url, incognito: true });
             }
             DOM.contextMenu.style.display = 'none';
         };
 
         DOM.ctxCopy.onclick = async () => {
             DOM.contextMenu.style.display = 'none';
-            if (contextIndex < 0) return;
+            if (!contextTarget) return;
             try {
-                await navigator.clipboard.writeText(getActiveDials()[contextIndex].url);
+                await navigator.clipboard.writeText(targetDial(contextTarget).url);
                 showToast('Link copied');
             } catch (err) {
                 showToast("Couldn't copy link");
@@ -886,11 +970,9 @@
 
         DOM.ctxEdit.onclick = () => {
 
-            if (contextIndex > -1) {
-
-                const dial = getActiveDials()[contextIndex];
-
-                editingIndex = contextIndex;
+            if (contextTarget) {
+                const dial = targetDial(contextTarget);
+                editingTarget = contextTarget;
 
                 DOM.modalTitle.textContent = "Edit Website";
 
@@ -910,13 +992,17 @@
 
         DOM.ctxDelete.onclick = () => {
 
-            if (contextIndex > -1 && confirm(`Delete ${getActiveDials()[contextIndex].name}?`)) {
-                const index = contextIndex;
-                const el = DOM.grid.querySelector(`.dial[data-index="${index}"]`);
+            if (contextTarget && confirm(`Delete ${targetDial(contextTarget).name}?`)) {
+                const target = contextTarget;
+                const container = target.childIndex > -1 ? LL.folderPanel.gridEl() : DOM.grid;
+                const el = container.querySelector(`.dial[data-index="${target.childIndex > -1 ? target.childIndex : target.index}"]`);
                 const remove = () => {
-                    getActiveDials().splice(index, 1);
+                    const [list, i] = targetList(target);
+                    list.splice(i, 1);
+                    LL.model.normalize(getActiveDials());
                     saveWorkspaces();
-                    LL.flip.flip(DOM.grid, '.dial', renderDials);
+                    if (target.childIndex > -1) LL.flip.flip(container, '.dial', renderDials);
+                    else LL.flip.flip(DOM.grid, '.dial', renderDials);
                 };
                 if (el && !LL.flip.reducedMotion()) {
                     el.style.pointerEvents = 'none';
@@ -1075,13 +1161,76 @@
 
         // 5. Context Menu
         DOM.grid.addEventListener('contextmenu', (e) => {
-            const dial = e.target.closest('.dial');
+            const dial = e.target.closest('.dial:not(#add-btn)');
             if (!dial) return;
             e.preventDefault();
             const index = parseInt(dial.dataset.index);
-            showContextMenu(e, index);
+            if (dial.classList.contains('folder')) showFolderContextMenu(e, index);
+            else showContextMenu(e, { index, childIndex: -1 });
         });
 
+        LL.folderPanel.gridEl().addEventListener('contextmenu', (e) => {
+            const dial = e.target.closest('.dial:not(.folder-add)');
+            const open = getOpenFolder();
+            if (!dial || !open) return;
+            e.preventDefault();
+            showContextMenu(e, { index: open.index, childIndex: parseInt(dial.dataset.index) });
+        });
+
+        // Folders open on click (a drag never reaches here: ui/drag.js swallows that click)
+        DOM.grid.addEventListener('click', (e) => {
+            const folder = e.target.closest('.folder');
+            if (folder) openFolder(parseInt(folder.dataset.index));
+        });
+        DOM.grid.addEventListener('keydown', (e) => {
+            const folder = e.target.closest('.folder');
+            if (folder && (e.key === 'Enter' || e.key === ' ')) {
+                e.preventDefault();
+                openFolder(parseInt(folder.dataset.index));
+            }
+        });
+
+        // Folder context menu
+        const hideFolderMenu = () => { DOM.folderContextMenu.style.display = 'none'; };
+        DOM.ctxFolderRename.onclick = () => {
+            hideFolderMenu();
+            openFolder(contextFolderIndex);
+            LL.folderPanel.focusName();
+        };
+        DOM.ctxFolderOpenAll.onclick = () => {
+            hideFolderMenu();
+            getActiveDials()[contextFolderIndex].items.forEach(dial => {
+                if (typeof chrome !== 'undefined' && chrome.tabs) chrome.tabs.create({ url: dial.url, active: false });
+                else window.open(dial.url, '_blank');
+            });
+        };
+        DOM.ctxFolderUngroup.onclick = () => {
+            hideFolderMenu();
+            LL.flip.flip(DOM.grid, '.dial', () => {
+                LL.model.ungroup(getActiveDials(), contextFolderIndex);
+                saveWorkspaces();
+                renderDials();
+            });
+        };
+        DOM.ctxFolderDelete.onclick = () => {
+            hideFolderMenu();
+            const folder = getActiveDials()[contextFolderIndex];
+            const n = folder.items.length;
+            if (!confirm(`Delete folder "${folder.name}" and its ${n} link${n === 1 ? '' : 's'}?`)) return;
+            LL.flip.flip(DOM.grid, '.dial', () => {
+                getActiveDials().splice(contextFolderIndex, 1);
+                saveWorkspaces();
+                renderDials();
+            });
+        };
+
+    }
+
+    function openAddModal() {
+        editingTarget = null;
+        DOM.modalTitle.textContent = "Add New Website";
+        clearInputs();
+        DOM.addModal.style.display = 'flex';
     }
 
     function clearInputs() {
@@ -1123,23 +1272,23 @@
         }
 
         const dialData = { name, url, img };
-
-        const activeDials = getActiveDials();
-
-        if (editingIndex > -1) {
-
-            activeDials[editingIndex] = dialData;
-
-        } else {
-
-            activeDials.push(dialData);
-
-        }
-
-        saveWorkspaces();
-        if (editingIndex > -1) {
+        const open = getOpenFolder();
+        if (editingTarget) {
+            const [list, i] = targetList(editingTarget);
+            list[i] = dialData;
+            saveWorkspaces();
             renderDials();
+        } else if (open) {
+            // "+" inside an open folder adds into that folder
+            open.folder.items.push(dialData);
+            saveWorkspaces();
+            LL.flip.flip(LL.folderPanel.gridEl(), '.dial', renderDials);
+            const added = LL.folderPanel.gridEl().querySelector(`.dial[data-index="${open.folder.items.length - 1}"]`);
+            if (added) added.classList.add('entering');
         } else {
+            const activeDials = getActiveDials();
+            activeDials.push(dialData);
+            saveWorkspaces();
             LL.flip.flip(DOM.grid, '.dial', renderDials);
             const added = DOM.grid.querySelector(`.dial[data-index="${activeDials.length - 1}"]`);
             if (added) added.classList.add('entering');
