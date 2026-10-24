@@ -376,13 +376,7 @@
 
         const root = document.documentElement;
 
-        root.style.setProperty('--col-count', settings.colCount);
-
-        root.style.setProperty('--dial-width', settings.dialSize + 'px');
-
-        root.style.setProperty('--col-gap', settings.colGap + 'px');
-
-        root.style.setProperty('--row-gap', settings.rowGap + 'px');
+        applyLayoutVars();
 
         root.style.setProperty('--bg-image', `url('${settings.bgImage}')`);
 
@@ -392,9 +386,11 @@
 
         DOM.sizeRange.value = settings.dialSize;
 
-        DOM.hGapVal.textContent = DOM.hGapRange.value = settings.colGap + 'px';
+        DOM.hGapRange.value = settings.colGap;
+        DOM.hGapVal.textContent = settings.colGap + 'px';
 
-        DOM.vGapVal.textContent = DOM.vGapRange.value = settings.rowGap + 'px';
+        DOM.vGapRange.value = settings.rowGap;
+        DOM.vGapVal.textContent = settings.rowGap + 'px';
 
         // Apply theme
 
@@ -416,6 +412,32 @@
 
         DOM.cacheIconsToggle.checked = settings.cacheIcons;
 
+    }
+
+    // Writes the grid's layout variables. Values are literal; if the grid would be wider
+    // than the window, dial and gap shrink together (same columns) so there is no sideways scroll.
+    function applyLayoutVars() {
+        const cols = Number(settings.colCount);
+        let dial = Number(settings.dialSize);
+        let colGap = Number(settings.colGap);
+        let rowGap = Number(settings.rowGap);
+        const availW = window.innerWidth - 40;
+        const gridW = cols * dial + (cols - 1) * colGap;
+        if (gridW > availW) {
+            const s = availW / gridW;
+            dial = Math.floor(dial * s);
+            colGap = Math.floor(colGap * s);
+            rowGap = Math.floor(rowGap * s);
+        }
+        const style = DOM.grid.style;
+        style.setProperty('--col-count', cols);
+        style.setProperty('--dial-width', dial + 'px');
+        style.setProperty('--col-gap', colGap + 'px');
+        style.setProperty('--row-gap', rowGap + 'px');
+    }
+
+    function persistSettings() {
+        localStorage.setItem('mySettings', JSON.stringify(settings));
     }
 
     function saveSettings() {
@@ -840,37 +862,22 @@
 
         // Range inputs
 
-        DOM.colRange.oninput = (e) => {
+        const ranges = [
+            [DOM.colRange, 'colCount'],
+            [DOM.sizeRange, 'dialSize'],
+            [DOM.hGapRange, 'colGap'],
+            [DOM.vGapRange, 'rowGap']
+        ];
+        ranges.forEach(([input, key]) => {
+            // Apply live while dragging; persist once on release
+            input.oninput = (e) => {
+                settings[key] = Number(e.target.value);
+                applySettings();
+            };
+            input.onchange = persistSettings;
+        });
 
-            settings.colCount = e.target.value;
-
-            saveSettings();
-
-        };
-
-        DOM.sizeRange.oninput = (e) => {
-
-            settings.dialSize = e.target.value;
-
-            saveSettings();
-
-        };
-
-        DOM.hGapRange.oninput = (e) => {
-
-            settings.colGap = e.target.value;
-
-            saveSettings();
-
-        };
-
-        DOM.vGapRange.oninput = (e) => {
-
-            settings.rowGap = e.target.value;
-
-            saveSettings();
-
-        };
+        window.addEventListener('resize', applyLayoutVars);
 
         // Theme options
 
