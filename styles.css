@@ -153,10 +153,24 @@ body::before {
 
 /* --- DRAG & DROP STATES --- */
 .dial.dragging {
-    opacity: 0.4;
-    border: 2px dashed #2196F3;
-    transform: scale(0.95);
-    box-shadow: none;
+    z-index: 50;
+    opacity: 0.95;
+    cursor: grabbing;
+    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.3);
+    transition: box-shadow 180ms ease-out;
+    will-change: transform;
+}
+
+/* While dragging, the hover lift would fight the sliding transforms */
+.drag-active .dial:hover:not(.dragging) {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+/* Holding a dial over another one: it will become a folder */
+.dial.group-target {
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.9), 0 12px 28px rgba(0, 0, 0, 0.3);
+    scale: 1.08;
+    transition: scale 150ms ease-out, box-shadow 150ms ease-out, transform 200ms cubic-bezier(.2, .7, .3, 1);
 }
 
 /* --- ADD BUTTON --- */

@@ -91,7 +91,7 @@
 
     let contextWorkspaceName = null;
 
-    let dragSrcEl = null;
+
 
     const defaultDials = [
 
@@ -503,7 +503,7 @@
 
             div.href = dial.url;
 
-            div.draggable = true;
+            div.draggable = false;
 
             div.dataset.index = index;
             // Stable identity across re-renders, for FLIP animations
@@ -1031,53 +1031,15 @@
 
         };
 
-        // Optimization #1: Delegated Events
-
-        // 1. Drag Start
-        DOM.grid.addEventListener('dragstart', (e) => {
-            const dial = e.target.closest('.dial');
-            if (!dial) return;
-            dragSrcEl = dial;
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/html', dial.innerHTML);
-            dial.classList.add('dragging');
-        });
-
-        // 2. Drag Over
-        DOM.grid.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            return false;
-        });
-
-        // 3. Drop
-        DOM.grid.addEventListener('drop', (e) => {
-            const dial = e.target.closest('.dial'); // Identify which dial we are dropping ON
-            if (!dial) return;
-
-            e.stopPropagation();
-            if (dragSrcEl !== dial) {
-                const oldIndex = parseInt(dragSrcEl.dataset.index);
-                const newIndex = parseInt(dial.dataset.index);
-
-                const activeDials = getActiveDials();
-                // Move the item in the array
-                const item = activeDials.splice(oldIndex, 1)[0];
-                activeDials.splice(newIndex, 0, item);
-
+        // Drag & drop: dials slide aside to open the landing gap (ui/drag.js)
+        LL.drag.attach(DOM.grid, {
+            itemSelector: '.dial:not(#add-btn)',
+            onReorder: (from, to) => {
+                LL.model.moveItem(getActiveDials(), from, to);
                 saveWorkspaces();
                 renderDials();
-            }
-            return false;
-        });
-
-        // 4. Drag End
-        DOM.grid.addEventListener('dragend', (e) => {
-            // Remove styling from the source element
-            if (dragSrcEl) {
-                dragSrcEl.classList.remove('dragging');
-                dragSrcEl = null;
-            }
+            },
+            onGroup: () => { }
         });
 
         // 5. Context Menu
