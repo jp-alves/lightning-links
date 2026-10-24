@@ -4,8 +4,6 @@
 
     'use strict';
 
-
-
     // Cache all DOM elements once
 
     const DOM = {
@@ -82,8 +80,6 @@
 
     };
 
-
-
     // State
 
     let editingIndex = -1;
@@ -94,8 +90,6 @@
 
     let dragSrcEl = null;
 
-
-
     const defaultDials = [
 
         { name: "Google", url: "https://www.google.com", img: "https://www.google.com/s2/favicons?domain=google.com&sz=128" },
@@ -103,8 +97,6 @@
         { name: "YouTube", url: "https://www.youtube.com", img: "https://www.google.com/s2/favicons?domain=youtube.com&sz=128" }
 
     ];
-
-
 
     const backgrounds = [
 
@@ -114,187 +106,87 @@
 
     ];
 
-
-
     let workspaces = {};
-
-
 
     let lastActiveWorkspace = 'Home';
 
-
-
     let settings = JSON.parse(localStorage.getItem('mySettings')) || {
-
-
 
         colCount: 6,
 
-
-
         dialSize: 160,
-
-
 
         colGap: 20,
 
-
-
         rowGap: 20,
-
-
 
         bgImage: 'backgrounds/bg1.jpg',
 
-
-
         theme: 'light',
-
-
 
         cacheIcons: false
 
-
-
     };
-
-
-
-
-
-
 
     // Data Migration from old version
 
-
-
     function migrateData() {
-
-
 
         const oldDials = localStorage.getItem('myDials');
 
-
-
         if (oldDials) {
-
-
 
             try {
 
-
-
                 workspaces['Home'] = JSON.parse(oldDials);
-
-
 
                 localStorage.removeItem('myDials');
 
-
-
                 saveWorkspaces();
-
-
 
             } catch (e) {
 
-
-
                 console.error("Error migrating old data:", e);
-
-
 
                 // If migration fails, start with default
 
-
-
                 workspaces['Home'] = defaultDials;
 
-
-
             }
-
-
 
         } else {
 
-
-
             const savedWorkspaces = localStorage.getItem('myWorkspaces');
-
-
 
             if (savedWorkspaces) {
 
-
-
                 workspaces = JSON.parse(savedWorkspaces);
-
-
 
                 lastActiveWorkspace = localStorage.getItem('lastActiveWorkspace') || 'Home';
 
-
-
             } else {
-
-
 
                 workspaces['Home'] = defaultDials;
 
-
-
             }
-
-
 
         }
 
-
-
     }
-
-
-
-
-
-
 
     function getActiveDials() {
 
-
-
         return workspaces[lastActiveWorkspace] || [];
 
-
-
     }
-
-
-
-
-
-
 
     function saveWorkspaces() {
 
-
-
         localStorage.setItem('myWorkspaces', JSON.stringify(workspaces));
-
-
 
         localStorage.setItem('lastActiveWorkspace', lastActiveWorkspace);
 
-
-
     }
-
-
-
-
-
-
 
     // Initialize on DOM ready
 
@@ -308,35 +200,19 @@
 
     }
 
-
-
     function init() {
-
-
 
         migrateData();
 
-
-
         cacheDOMElements();
-
-
 
         applySettings();
 
-
-
         renderDials();
-
-
 
         renderBackgroundOptions();
 
-
-
         renderWorkspacesTabs();
-
-
 
         attachEventListeners();
 
@@ -454,15 +330,11 @@
 
     }
 
-
-
     function renderWorkspacesTabs() {
 
         DOM.workspacesTabs.innerHTML = '';
 
         const workspaceNames = Object.keys(workspaces);
-
-
 
         workspaceNames.forEach(name => {
 
@@ -484,8 +356,6 @@
 
         });
 
-
-
         if (workspaceNames.length < 5) {
 
             const addButton = document.createElement('li');
@@ -502,8 +372,6 @@
 
     }
 
-
-
     function applySettings() {
 
         const root = document.documentElement;
@@ -518,8 +386,6 @@
 
         root.style.setProperty('--bg-image', `url('${settings.bgImage}')`);
 
-
-
         DOM.colVal.textContent = DOM.colRange.value = settings.colCount;
 
         DOM.sizeVal.textContent = Math.round((settings.dialSize / 160) * 100) + '%';
@@ -529,8 +395,6 @@
         DOM.hGapVal.textContent = DOM.hGapRange.value = settings.colGap + 'px';
 
         DOM.vGapVal.textContent = DOM.vGapRange.value = settings.rowGap + 'px';
-
-
 
         // Apply theme
 
@@ -548,15 +412,11 @@
 
         }
 
-
-
         // Apply cache icons toggle
 
         DOM.cacheIconsToggle.checked = settings.cacheIcons;
 
     }
-
-
 
     function saveSettings() {
 
@@ -566,8 +426,6 @@
 
     }
 
-
-
     // Optimized render using DocumentFragment
 
     function renderDials() {
@@ -576,11 +434,7 @@
 
         items.forEach(el => el.remove());
 
-
-
         const fragment = document.createDocumentFragment();
-
-
 
         const dials = getActiveDials();
 
@@ -596,8 +450,6 @@
 
             div.dataset.index = index;
 
-
-
             // Cleaner template literal
 
             div.innerHTML = `
@@ -608,18 +460,13 @@
 
                     `;
 
-
             fragment.appendChild(div);
 
         });
 
-
-
         DOM.grid.insertBefore(fragment, DOM.addBtn);
 
     }
-
-
 
     // Context menu logic
 
@@ -635,8 +482,6 @@
 
     }
 
-
-
     function showWorkspaceContextMenu(e, workspaceName) {
 
         if (workspaceName === 'Home') return; // Don't allow context menu on Home
@@ -650,8 +495,6 @@
         DOM.workspaceContextMenu.style.top = e.pageY + 'px';
 
     }
-
-
 
     // Background options rendering
 
@@ -669,15 +512,11 @@
 
     }
 
-
-
     function createBgThumb(src, isCustom = false) {
 
         const wrapper = document.createElement('div');
 
         wrapper.className = 'bg-wrapper';
-
-
 
         const img = document.createElement('img');
 
@@ -686,8 +525,6 @@
         img.className = 'bg-option';
 
         if (src === settings.bgImage) img.classList.add('selected');
-
-
 
         img.onclick = () => {
 
@@ -701,11 +538,7 @@
 
         };
 
-
-
         wrapper.appendChild(img);
-
-
 
         if (isCustom) {
 
@@ -740,8 +573,6 @@
         DOM.bgGrid.appendChild(wrapper);
 
     }
-
-
 
     // Attach all event listeners
 
@@ -807,8 +638,6 @@
 
         });
 
-
-
         DOM.workspacesTabs.addEventListener('contextmenu', (e) => {
 
             const target = e.target;
@@ -822,8 +651,6 @@
             }
 
         });
-
-
 
         // Modal controls
 
@@ -839,8 +666,6 @@
 
         };
 
-
-
         DOM.cancelBtn.onclick = () => {
 
             DOM.addModal.style.display = 'none';
@@ -849,11 +674,7 @@
 
         };
 
-
-
         DOM.saveBtn.onclick = handleSave;
-
-
 
         // Context menu - hide on outside click
 
@@ -872,8 +693,6 @@
             }
 
         });
-
-
 
         // Workspace Context Menu Actions
 
@@ -899,8 +718,6 @@
 
                 delete workspaces[contextWorkspaceName];
 
-
-
                 // If the active workspace was renamed, update it
 
                 if (lastActiveWorkspace === contextWorkspaceName) {
@@ -919,13 +736,9 @@
 
         };
 
-
-
         DOM.ctxDeleteWorkspace.onclick = () => {
 
             if (!contextWorkspaceName) return;
-
-
 
             if (Object.keys(workspaces).length <= 1) {
 
@@ -936,8 +749,6 @@
                 return;
 
             }
-
-
 
             if (confirm(`Are you sure you want to delete the "${contextWorkspaceName}" workspace and all its links?`)) {
 
@@ -962,8 +773,6 @@
             DOM.workspaceContextMenu.style.display = 'none';
 
         };
-
-
 
         // Context menu: Open in New Tab
 
@@ -1007,47 +816,27 @@
 
         };
 
-
-
         DOM.ctxDelete.onclick = () => {
-
-
 
             if (contextIndex > -1 && confirm(`Delete ${getActiveDials()[contextIndex].name}?`)) {
 
-
-
                 getActiveDials().splice(contextIndex, 1);
-
-
 
                 saveWorkspaces();
 
-
-
                 renderDials();
-
-
 
             }
 
-
-
             DOM.contextMenu.style.display = 'none';
 
-
-
         };
-
-
 
         // Settings modal
 
         DOM.settingsBtn.onclick = () => DOM.settingsModal.style.display = 'flex';
 
         DOM.closeSettingsBtn.onclick = () => DOM.settingsModal.style.display = 'none';
-
-
 
         // Range inputs
 
@@ -1083,8 +872,6 @@
 
         };
 
-
-
         // Theme options
 
         DOM.themeOptions.onchange = (e) => {
@@ -1095,8 +882,6 @@
 
         };
 
-
-
         // Cache icons toggle
 
         DOM.cacheIconsToggle.onchange = (e) => {
@@ -1106,8 +891,6 @@
             saveSettings();
 
         };
-
-
 
         // Tabs
 
@@ -1126,8 +909,6 @@
             };
 
         });
-
-
 
         // Auto-generate name from URL
 
@@ -1157,8 +938,6 @@
 
         };
 
-
-
         // Import/Export
 
         DOM.exportBtn.onclick = handleExport;
@@ -1167,13 +946,9 @@
 
         DOM.importFile.onchange = handleImport;
 
-
-
         // Background upload
 
         DOM.bgUpload.onchange = handleBgUpload;
-
-
 
         // Close modals on outside click
 
@@ -1245,31 +1020,15 @@
 
     }
 
-
-
     function clearInputs() {
-
-
 
         DOM.nameInput.value = '';
 
-
-
         DOM.urlInput.value = '';
-
-
 
         DOM.imgInput.value = '';
 
-
-
     }
-
-
-
-
-
-
 
     async function faviconToDataURL(url) {
         try {
@@ -1311,353 +1070,165 @@
         }
     }
 
-
-
-
-
-
-
     async function handleSave() {
-
-
 
         const name = DOM.nameInput.value;
 
-
-
         let url = DOM.urlInput.value;
-
-
 
         let img = DOM.imgInput.value;
 
-
-
-
-
-
-
         if (!name || !url) return alert("Name and URL required!");
-
-
 
         if (!url.startsWith('http')) url = 'https://' + url;
 
-
-
-
-
-
-
         if (!img) {
-
-
 
             try {
 
-
-
                 const domain = new URL(url).hostname;
-
-
 
                 img = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
 
-
-
             } catch (e) {
-
-
 
                 img = "icons/icon128.png";
 
-
-
             }
 
-
-
         }
-
-
-
-
-
-
 
         if (settings.cacheIcons && img !== "icons/icon128.png") {
 
-
-
             img = await faviconToDataURL(img);
 
-
-
         }
-
-
-
-
-
-
 
         const dialData = { name, url, img };
 
-
-
-
-
-
-
         const activeDials = getActiveDials();
-
-
 
         if (editingIndex > -1) {
 
-
-
             activeDials[editingIndex] = dialData;
-
-
 
         } else {
 
-
-
             activeDials.push(dialData);
-
-
 
         }
 
-
-
-
-
-
-
         saveWorkspaces();
-
-
 
         renderDials();
 
-
-
         DOM.addModal.style.display = 'none';
 
-
-
         clearInputs();
-
-
 
     }
 
     function handleExport() {
 
-
-
         const data = { workspaces, lastActiveWorkspace, settings };
-
-
 
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
 
-
-
         const url = URL.createObjectURL(blob);
-
-
 
         const a = document.createElement('a');
 
-
-
         a.href = url;
-
-
 
         a.download = 'lightning-links-backup.json';
 
-
-
         document.body.appendChild(a);
-
-
 
         a.click();
 
-
-
         document.body.removeChild(a);
-
-
 
         URL.revokeObjectURL(url); // Clean up memory
 
-
-
     }
-
-
 
     function handleImport(e) {
 
-
-
         const file = e.target.files[0];
-
-
 
         if (!file) return;
 
-
-
-
-
-
-
         const reader = new FileReader();
-
-
 
         reader.onload = function (event) {
 
-
-
             try {
-
-
 
                 const data = JSON.parse(event.target.result);
 
-
-
                 if (data.workspaces && data.settings) { // New format
-
-
 
                     workspaces = data.workspaces;
 
-
-
                     lastActiveWorkspace = data.lastActiveWorkspace || 'Home';
-
-
 
                     settings = data.settings;
 
-
-
                     saveWorkspaces();
-
-
 
                     saveSettings();
 
-
-
                     renderDials();
-
-
 
                     applySettings();
 
-
-
                     renderBackgroundOptions();
 
-
-
                     renderWorkspacesTabs();
-
-
 
                     alert("Import successful!");
 
-
-
                 } else if (data.dials && data.settings) { // Old format
-
-
 
                     workspaces['Home'] = data.dials;
 
-
-
                     lastActiveWorkspace = 'Home';
-
-
 
                     settings = data.settings;
 
-
-
                     saveWorkspaces();
-
-
 
                     saveSettings();
 
-
-
                     renderDials();
-
-
 
                     applySettings();
 
-
-
                     renderBackgroundOptions();
-
-
 
                     renderWorkspacesTabs();
 
-
-
                     alert("Old backup format imported successfully into 'Home' workspace!");
-
-
 
                 }
 
-
-
             } catch (err) {
-
-
 
                 alert("Error reading file.");
 
-
-
             }
-
-
 
         };
 
-
-
         reader.readAsText(file);
 
-
-
     }
-
-
 
     function handleBgUpload(e) {
 
         const file = e.target.files[0];
 
         if (!file) return;
-
-
 
         const reader = new FileReader();
 
@@ -1676,8 +1247,6 @@
                 const MAX_HEIGHT = 1080;
 
                 let width = img.width, height = img.height;
-
-
 
                 if (width > height) {
 
@@ -1701,8 +1270,6 @@
 
                 }
 
-
-
                 canvas.width = width;
 
                 canvas.height = height;
@@ -1710,8 +1277,6 @@
                 ctx.drawImage(img, 0, 0, width, height);
 
                 const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
-
-
 
                 settings.bgImage = optimizedDataUrl;
 
