@@ -162,6 +162,13 @@ body::before {
     will-change: transform;
 }
 
+/* A dragged dial may travel outside the grid box: don't clip it */
+.container.drag-active,
+.folder-grid.drag-active {
+    contain: none;
+    overflow: visible;
+}
+
 /* While dragging, the hover lift would fight the sliding transforms */
 .drag-active .dial:hover:not(.dragging) {
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);

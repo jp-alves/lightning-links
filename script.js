@@ -1148,15 +1148,53 @@
 
         };
 
-        // Drag & drop: dials slide aside to open the landing gap (ui/drag.js)
-        LL.drag.attach(DOM.grid, {
+        // Drag & drop: dials slide aside to open the landing gap; holding on a
+        // dial's centre makes a folder (ui/drag.js)
+        const gridDrag = LL.drag.attach(DOM.grid, {
             itemSelector: '.dial:not(#add-btn)',
             onReorder: (from, to) => {
                 LL.model.moveItem(getActiveDials(), from, to);
                 saveWorkspaces();
                 renderDials();
             },
-            onGroup: () => { }
+            // Folders can't go inside folders
+            canGroup: (from) => !LL.model.isFolder(getActiveDials()[from]),
+            onGroup: (from, target) => {
+                const items = getActiveDials();
+                LL.flip.flip(DOM.grid, '.dial', () => {
+                    if (LL.model.isFolder(items[target])) LL.model.addToFolder(items, from, target);
+                    else LL.model.createFolder(items, from, target, 'f' + Date.now().toString(36));
+                    saveWorkspaces();
+                    renderDials();
+                });
+            }
+        });
+
+        // Inside an open folder: reorder, or drag a dial out to put it back on the grid
+        LL.drag.attach(LL.folderPanel.gridEl(), {
+            itemSelector: '.dial:not(.add-btn)',
+            boundsEl: LL.folderPanel.panelEl(),
+            canGroup: () => false,
+            onReorder: (from, to) => {
+                const open = getOpenFolder();
+                if (!open) return;
+                LL.model.moveItem(open.folder.items, from, to);
+                saveWorkspaces();
+                renderDials();
+            },
+            onDragOutside: (from, x, y, e) => {
+                const open = getOpenFolder();
+                if (!open) return false;
+                const items = getActiveDials();
+                const dial = open.folder.items[from];
+                LL.model.removeFromFolder(items, open.index, from, open.index + 1);
+                saveWorkspaces();
+                LL.folderPanel.close();
+                renderDials();
+                const el = DOM.grid.querySelector(`.dial[data-index="${items.indexOf(dial)}"]`);
+                if (el) gridDrag.begin(el, e);
+                return true;
+            }
         });
 
         // 5. Context Menu

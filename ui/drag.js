@@ -8,7 +8,8 @@
     const REORDER_DELAY = 200;
     const SLIDE = 'transform 200ms cubic-bezier(.2, .7, .3, 1)';
 
-    // opts: { itemSelector, onReorder(from, to), onGroup(from, target), onDragOutside(from, x, y) -> bool, holdMs }
+    // opts: { itemSelector, onReorder(from, to), onGroup(from, target), canGroup(from, target) -> bool,
+    //         onDragOutside(from, x, y, event) -> bool (true = drag handed elsewhere), boundsEl, holdMs }
     function attach(container, opts) {
         const holdMs = opts.holdMs ?? 400;
         let press = null;   // pointerdown candidate
@@ -26,7 +27,8 @@
             press = { el, x: e.clientX, y: e.clientY, pointerId: e.pointerId };
         }
 
-        function start(e) {
+        // grab: pointer offset inside the item; defaults to where it was pressed
+        function start(e, grab) {
             const all = items();
             const from = all.indexOf(press.el);
             const slots = all.map(el => toRect(el.getBoundingClientRect()));
@@ -34,8 +36,8 @@
             drag = {
                 el: press.el, from, slots, others,
                 home: slots[from],
-                offsetX: press.x - slots[from].left,
-                offsetY: press.y - slots[from].top,
+                offsetX: grab ? grab.x : press.x - slots[from].left,
+                offsetY: grab ? grab.y : press.y - slots[from].top,
                 gap: from,             // insert position among `others`
                 holdTarget: -1, holdTimer: 0, groupTarget: -1,
                 pendingGap: -1, pendingTimer: 0
@@ -81,7 +83,7 @@
             drag.el.style.transform = `translate(${x - drag.offsetX - drag.home.left}px, ${y - drag.offsetY - drag.home.top}px) scale(1.05)`;
 
             if (opts.onDragOutside) {
-                const box = container.getBoundingClientRect();
+                const box = (opts.boundsEl || container).getBoundingClientRect();
                 const outside = x < box.left || x > box.right || y < box.top || y > box.bottom;
                 if (outside && opts.onDragOutside(drag.from, x, y, e)) {
                     finish(false, true);
@@ -94,7 +96,8 @@
                 const r = slotOf(j);
                 return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
             });
-            if (target > -1 && LL.dragmath.zone(slotOf(target), x, y) === 'centre') {
+            const groupable = target > -1 && (!opts.canGroup || opts.canGroup(drag.from, target < drag.from ? target : target + 1));
+            if (groupable && LL.dragmath.zone(slotOf(target), x, y) === 'centre') {
                 clearPending();
                 if (drag.holdTarget !== target) {
                     clearHold();
@@ -131,6 +134,7 @@
         // commit: apply the result; handedOff: another container continues the drag
         function finish(commit, handedOff = false, x, y) {
             const d = drag;
+            const groupTarget = d.groupTarget;
             // Dropping before the gap settled still lands where the pointer is
             if (commit && d.groupTarget === -1 && x !== undefined) {
                 const onCentre = d.holdTarget > -1;
@@ -161,8 +165,8 @@
             const key = d.el.dataset.key;
             const toIndex = (j) => (j < d.from ? j : j + 1);
             reset();
-            if (d.groupTarget > -1) {
-                opts.onGroup(d.from, toIndex(d.groupTarget));
+            if (groupTarget > -1) {
+                opts.onGroup(d.from, toIndex(groupTarget));
             } else if (d.gap !== d.from) {
                 opts.onReorder(d.from, d.gap);
             }
@@ -230,6 +234,14 @@
         document.addEventListener('keydown', onKeyDown);
 
         return {
+            // Continue a drag that started elsewhere (e.g. a dial dragged out of a folder)
+            begin(el, e) {
+                if (drag) return;
+                const r = el.getBoundingClientRect();
+                press = { el, x: e.clientX, y: e.clientY, pointerId: e.pointerId };
+                start(e, { x: r.width / 2, y: r.height / 2 });
+                move(e);
+            },
             detach() {
                 container.removeEventListener('pointerdown', onPointerDown);
                 container.removeEventListener('pointermove', onPointerMove);
