@@ -494,7 +494,7 @@
         const fragment = document.createDocumentFragment();
 
         const dials = getActiveDials();
-
+        const seen = {};
         dials.forEach((dial, index) => {
 
             const div = document.createElement('a');
@@ -506,6 +506,9 @@
             div.draggable = true;
 
             div.dataset.index = index;
+            // Stable identity across re-renders, for FLIP animations
+            seen[dial.url] = (seen[dial.url] || 0) + 1;
+            div.dataset.key = dial.url + '#' + seen[dial.url];
 
             // Cleaner template literal
 
@@ -877,13 +880,22 @@
         DOM.ctxDelete.onclick = () => {
 
             if (contextIndex > -1 && confirm(`Delete ${getActiveDials()[contextIndex].name}?`)) {
-
-                getActiveDials().splice(contextIndex, 1);
-
-                saveWorkspaces();
-
-                renderDials();
-
+                const index = contextIndex;
+                const el = DOM.grid.querySelector(`.dial[data-index="${index}"]`);
+                const remove = () => {
+                    getActiveDials().splice(index, 1);
+                    saveWorkspaces();
+                    LL.flip.flip(DOM.grid, '.dial', renderDials);
+                };
+                if (el && !LL.flip.reducedMotion()) {
+                    el.style.pointerEvents = 'none';
+                    el.animate(
+                        [{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(.9)' }],
+                        { duration: 160, easing: 'ease-out', fill: 'forwards' }
+                    ).onfinish = remove;
+                } else {
+                    remove();
+                }
             }
 
             DOM.contextMenu.style.display = 'none';
@@ -1132,9 +1144,13 @@
         }
 
         saveWorkspaces();
-
-        renderDials();
-
+        if (editingIndex > -1) {
+            renderDials();
+        } else {
+            LL.flip.flip(DOM.grid, '.dial', renderDials);
+            const added = DOM.grid.querySelector(`.dial[data-index="${activeDials.length - 1}"]`);
+            if (added) added.classList.add('entering');
+        }
         DOM.addModal.style.display = 'none';
 
         clearInputs();

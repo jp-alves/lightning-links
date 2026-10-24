@@ -99,15 +99,35 @@ body::before {
     position: relative;
     padding: 8px;
     box-sizing: border-box;
-    transition: transform 0.1s, box-shadow 0.1s;
-    will-change: transform, box-shadow;
+    transition: transform 180ms cubic-bezier(.2, .7, .3, 1), box-shadow 180ms ease-out;
     user-select: none;
 }
 
 .dial:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+    transform: translateY(-4px) scale(1.03);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
     z-index: 10;
+    will-change: transform;
+}
+
+/* New dial fades and scales into place */
+.dial.entering {
+    animation: dial-enter 200ms cubic-bezier(.2, .7, .3, 1);
+}
+
+@keyframes dial-enter {
+    from {
+        opacity: 0;
+        transform: scale(0.9);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dial,
+    .container.resizing {
+        transition-duration: 1ms !important;
+        animation-duration: 1ms !important;
+    }
 }
 
 .dial img {
