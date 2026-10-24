@@ -77,6 +77,8 @@
         themeOptions: null,
 
         cacheIconsToggle: null,
+        autoFitToggle: null,
+        workspacesContainer: null,
         iconCacheStatus: null
 
     };
@@ -130,7 +132,8 @@
 
         theme: 'light',
 
-        cacheIcons: false
+        cacheIcons: false,
+        autoFit: true
 
     };
 
@@ -343,6 +346,8 @@
         DOM.workspacesTabs = document.getElementById('workspaces-tabs');
         DOM.themeOptions = document.getElementById('theme-options');
         DOM.cacheIconsToggle = document.getElementById('cache-icons-toggle');
+        DOM.autoFitToggle = document.getElementById('autofit-toggle');
+        DOM.workspacesContainer = document.getElementById('workspaces-container');
         DOM.iconCacheStatus = document.getElementById('icon-cache-status');
 
     }
@@ -428,29 +433,38 @@
         // Apply cache icons toggle
 
         DOM.cacheIconsToggle.checked = settings.cacheIcons;
+        DOM.autoFitToggle.checked = settings.autoFit !== false;
 
     }
 
-    // Writes the grid's layout variables. Values are literal; if the grid would be wider
-    // than the window, dial and gap shrink together (same columns) so there is no sideways scroll.
+    // Writes the grid's layout variables from the settings, fitted to the window (lib/layout.js)
     function applyLayoutVars() {
-        const cols = Number(settings.colCount);
-        let dial = Number(settings.dialSize);
-        let colGap = Number(settings.colGap);
-        let rowGap = Number(settings.rowGap);
-        const availW = window.innerWidth - 40;
-        const gridW = cols * dial + (cols - 1) * colGap;
-        if (gridW > availW) {
-            const s = availW / gridW;
-            dial = Math.floor(dial * s);
-            colGap = Math.floor(colGap * s);
-            rowGap = Math.floor(rowGap * s);
-        }
+        const barBottom = DOM.workspacesContainer.getBoundingClientRect().bottom;
+        const fit = LL.layout.computeFit({
+            availW: window.innerWidth - 40,
+            availH: Math.min(window.innerHeight * 0.9, window.innerHeight - 2 * (barBottom + 10)) - 40,
+            count: getActiveDials().length + 1, // + the add button
+            cols: settings.colCount,
+            dialSize: settings.dialSize,
+            colGap: settings.colGap,
+            rowGap: settings.rowGap,
+            autoFit: settings.autoFit !== false
+        });
         const style = DOM.grid.style;
-        style.setProperty('--col-count', cols);
-        style.setProperty('--dial-width', dial + 'px');
-        style.setProperty('--col-gap', colGap + 'px');
-        style.setProperty('--row-gap', rowGap + 'px');
+        style.setProperty('--col-count', fit.cols);
+        style.setProperty('--dial-width', fit.dialSize + 'px');
+        style.setProperty('--col-gap', fit.colGap + 'px');
+        style.setProperty('--row-gap', fit.rowGap + 'px');
+    }
+
+    let resizeFrame = 0;
+    let resizeTimer = 0;
+    function onResize() {
+        DOM.grid.classList.add('resizing');
+        cancelAnimationFrame(resizeFrame);
+        resizeFrame = requestAnimationFrame(applyLayoutVars);
+        clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => DOM.grid.classList.remove('resizing'), 250);
     }
 
     function bgUrl() {
@@ -508,6 +522,8 @@
         });
 
         DOM.grid.insertBefore(fragment, DOM.addBtn);
+
+        applyLayoutVars();
 
     }
 
@@ -897,7 +913,12 @@
             input.onchange = persistSettings;
         });
 
-        window.addEventListener('resize', applyLayoutVars);
+        window.addEventListener('resize', onResize);
+
+        DOM.autoFitToggle.onchange = (e) => {
+            settings.autoFit = e.target.checked;
+            saveSettings();
+        };
 
         // Theme options
 

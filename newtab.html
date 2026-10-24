@@ -65,6 +65,15 @@
                     <label>Vertical Spacing: <span id="v-gap-val">20px</span></label>
                     <input type="range" id="v-gap-range" min="0" max="100" value="20">
                 </div>
+                <div class="setting-row">
+                    <label>Auto-fit to window
+                        <div class="sub-label">Shrink and reflow dials so they all fit when the window is small.</div>
+                    </label>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="autofit-toggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
             </div>
 
             <div id="tab-bg" class="tab-pane">
@@ -126,6 +135,7 @@
 
     <script src="lib/model.js"></script>
     <script src="lib/iconcache.js"></script>
+    <script src="lib/layout.js"></script>
     <script src="script.js"></script>
 </body>
 

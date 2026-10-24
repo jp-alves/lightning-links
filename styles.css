@@ -74,6 +74,11 @@ body::before {
     contain: content;
 }
 
+/* Smooth relayout while the window is being resized */
+.container.resizing {
+    transition: grid-template-columns 200ms ease-out, column-gap 200ms ease-out, row-gap 200ms ease-out;
+}
+
 .container::-webkit-scrollbar {
     display: none;
 }
