@@ -79,3 +79,10 @@ test('when nothing fits, dials keep their size (only shrunk to the width) and sc
     assert.strictEqual(r.dialSize, 160);
     assert.strictEqual(r.scroll, true);
 });
+
+test('cellAspect: an icon cell is the icon (60% of the width) plus its label', () => {
+    const { cellAspect } = require('../lib/layout.js');
+    // 160px wide: 96px icon + 26px label block = 122px tall
+    assert.strictEqual(cellAspect(160), 160 / 122);
+    assert.ok(cellAspect(80) < cellAspect(300), 'the label is a bigger share of small cells');
+});
