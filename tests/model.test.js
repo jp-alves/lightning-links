@@ -72,6 +72,11 @@ test('normalizeImport accepts v1.0 dials format and coerces numbers', () => {
     assert.strictEqual(r.settings.dialSize, 160);
 });
 
+test('normalizeImport: name size comes back as a number', () => {
+    const r = model.normalizeImport({ workspaces: { W: [A] }, settings: { labelScale: '120' } });
+    assert.strictEqual(r.settings.labelScale, 120);
+});
+
 test('normalizeImport passes workspaces format through', () => {
     const r = model.normalizeImport({ workspaces: { W: [A] }, settings: {}, lastActiveWorkspace: 'W' });
     assert.deepStrictEqual(r.workspaces, { W: [A] });

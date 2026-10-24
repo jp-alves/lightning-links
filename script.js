@@ -145,7 +145,9 @@
 
     let customBg = BOOT.bgImage || null;
 
-    let settings = BOOT.settings || {
+    // Settings saved by older versions lack the newer keys: fill them in, so they always
+    // carry the full layout (and backups do too)
+    const DEFAULT_SETTINGS = {
 
         colCount: 6,
 
@@ -164,6 +166,8 @@
         autoFit: true
 
     };
+
+    let settings = Object.assign({}, DEFAULT_SETTINGS, BOOT.settings);
 
     // Data Migration from old version
 
@@ -292,9 +296,11 @@
             DOM.iconCacheStatus.textContent = 'Storage full — some icons not saved';
             return;
         }
-        const urls = collectIconUrls();
-        const saved = urls.filter(u => u in iconCache).length;
-        let text = `${saved} of ${urls.length} icons saved for offline`;
+        // Uploaded icons (data: URLs) and bundled ones are already stored, so they count as saved
+        const icons = new Set();
+        LL.model.forEachDial(workspaces, dial => { if (dial.img) icons.add(dial.img); });
+        const saved = [...icons].filter(img => !/^https?:/.test(img) || img in iconCache).length;
+        let text = `${saved} of ${icons.size} icons saved for offline`;
         if (failed) text += ` · ${failed} couldn't be saved`;
         DOM.iconCacheStatus.textContent = text;
     }
@@ -1311,8 +1317,22 @@
         DOM.confirmTitle.textContent = title;
         DOM.confirmMessage.textContent = message;
         DOM.confirmOk.textContent = confirmLabel;
+        DOM.confirmOk.className = 'btn btn-destructive';
+        DOM.confirmCancel.style.display = '';
         DOM.confirmModal.style.display = 'flex';
         DOM.confirmCancel.focus();
+        return new Promise(resolve => { confirmResolve = resolve; });
+    }
+
+    // Messages (import results, errors): the same frosted sheet with a single OK
+    function showNotice({ title, message = '' }) {
+        DOM.confirmTitle.textContent = title;
+        DOM.confirmMessage.textContent = message;
+        DOM.confirmOk.textContent = 'OK';
+        DOM.confirmOk.className = 'btn btn-primary';
+        DOM.confirmCancel.style.display = 'none';
+        DOM.confirmModal.style.display = 'flex';
+        DOM.confirmOk.focus();
         return new Promise(resolve => { confirmResolve = resolve; });
     }
 
@@ -1485,14 +1505,14 @@
                 imported = LL.model.normalizeImport(data);
             } catch (err) { }
             if (!imported) {
-                alert("Error reading file.");
+                showNotice({ title: 'Couldn’t import this file', message: 'It isn’t a Lightning Links backup, or it is damaged.' });
                 return;
             }
 
             const nextWorkspaces = data.workspaces
                 ? imported.workspaces
                 : Object.assign({}, workspaces, { Home: imported.workspaces.Home }); // v1.0 single-list backup goes into Home
-            const nextSettings = imported.settings;
+            const nextSettings = Object.assign({}, DEFAULT_SETTINGS, imported.settings);
             // v1.0 backups carry the custom background inside settings
             const importedBg = imported.bgImage ||
                 (nextSettings.bgImage && String(nextSettings.bgImage).startsWith('data:') ? nextSettings.bgImage : null);
@@ -1517,10 +1537,10 @@
                 core[2][1] = JSON.stringify(nextSettings);
                 result = LL.storage.writeAll(localStorage, core, [LL.iconcache.KEY]);
                 if (result === 'full') {
-                    alert("Storage full — backup not imported. Nothing was changed.");
+                    showNotice({ title: 'Backup not imported', message: 'There isn’t enough storage space. Nothing was changed.' });
                     return;
                 }
-                note = importedBg ? ' (the background image was too large to keep)' : ' (saved icons were not restored)';
+                note = importedBg ? 'The wallpaper was too large to keep, so the default one is used.' : 'Icons saved for offline use were not restored.';
             }
 
             // Storage is written: now switch the page over
@@ -1534,7 +1554,7 @@
             renderDials();
             renderBackgroundOptions();
             renderWorkspacesTabs();
-            alert("Import successful!" + note);
+            showNotice({ title: 'Backup imported', message: note || 'Your links and settings have been restored.' });
         };
 
         reader.readAsText(file);

@@ -922,6 +922,10 @@ input[type=range]:focus-visible::-webkit-slider-thumb {
 }
 
 /* Delete confirmations */
+#confirm-modal {
+    z-index: 300;                        /* opened from other sheets (Settings): always on top */
+}
+
 .confirm-sheet {
     width: 340px;
     text-align: center;
