@@ -29,6 +29,9 @@
         contextMenu: null,
 
         ctxNewTab: null,
+        ctxIncognito: null,
+        ctxCopy: null,
+        toast: null,
 
         ctxEdit: null,
 
@@ -298,6 +301,9 @@
         DOM.contextMenu = document.getElementById('context-menu');
 
         DOM.ctxNewTab = document.getElementById('ctx-newtab');
+        DOM.ctxIncognito = document.getElementById('ctx-incognito');
+        DOM.ctxCopy = document.getElementById('ctx-copy');
+        DOM.toast = document.getElementById('toast');
 
         DOM.ctxEdit = document.getElementById('ctx-edit');
 
@@ -510,15 +516,14 @@
             seen[dial.url] = (seen[dial.url] || 0) + 1;
             div.dataset.key = dial.url + '#' + seen[dial.url];
 
-            // Cleaner template literal
-
-            div.innerHTML = `
-
-                        <img src="${LL.iconcache.resolveIcon(iconCache, dial.img)}" decoding="async" onerror="this.src='icons/icon128.png'" alt="${dial.name}">
-
-                        <span>${dial.name}</span>
-
-                    `;
+            const img = document.createElement('img');
+            img.src = LL.iconcache.resolveIcon(iconCache, dial.img);
+            img.decoding = 'async';
+            img.alt = dial.name;
+            img.onerror = () => { img.onerror = null; img.src = 'icons/icon128.png'; };
+            const label = document.createElement('span');
+            label.textContent = dial.name;
+            div.append(img, label);
 
             fragment.appendChild(div);
 
@@ -528,6 +533,14 @@
 
         applyLayoutVars();
 
+    }
+
+    let toastTimer = 0;
+    function showToast(text) {
+        DOM.toast.textContent = text;
+        DOM.toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => DOM.toast.classList.remove('show'), 1500);
     }
 
     // Context menu logic
@@ -849,6 +862,24 @@
 
             DOM.contextMenu.style.display = 'none';
 
+        };
+
+        DOM.ctxIncognito.onclick = () => {
+            if (contextIndex > -1 && typeof chrome !== 'undefined' && chrome.windows) {
+                chrome.windows.create({ url: getActiveDials()[contextIndex].url, incognito: true });
+            }
+            DOM.contextMenu.style.display = 'none';
+        };
+
+        DOM.ctxCopy.onclick = async () => {
+            DOM.contextMenu.style.display = 'none';
+            if (contextIndex < 0) return;
+            try {
+                await navigator.clipboard.writeText(getActiveDials()[contextIndex].url);
+                showToast('Link copied');
+            } catch (err) {
+                showToast("Couldn't copy link");
+            }
         };
 
         // Context menu actions
