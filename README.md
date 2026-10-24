@@ -18,11 +18,15 @@ Lightning Links is my attempt to return to basics. No AI, no subscriptions, no s
 
 * **Instant Load:** Optimized to render the moment you open a tab.
 * **Smart Preload:** Uses CSS variables to paint the layout immediately, preventing the "white flash" on startup.
-* **Drag & Drop:** Intuitively reorder your shortcuts to match your workflow.
+* **Drag & Drop:** Intuitively reorder your shortcuts to match your workflow. The other dials slide aside to show where yours will land.
+* **Folders:** Hold a dial over another one to group them into a folder, just like on a phone. Click the folder to zoom in and pick a site.
+* **Right-Click Shortcuts:** Open any dial in an Incognito window, or copy its link.
+* **Auto-Fit:** When the window is half-screen or smaller, dials shrink (and reflow only if needed) so they all stay visible. You can turn it off in Settings.
 * **Fully Customizable:**
     * Adjust column count, dial size, and spacing.
     * Upload custom backgrounds or choose from the included presets.
 * **Privacy First:** **No data leaves your device.** All shortcuts and settings are saved in your browser's `localStorage`.
+* **Works Offline:** With "Cache Icons" on, every icon is saved locally, so your dials look right even without a connection.
 * **Import/Export:** Easily backup your configuration or move it to another computer.
 * **Zero Bloat:** No AI assistants, no analytics, and no unnecessary tracking.
 

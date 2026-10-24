@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Lightning Links - Fast New Tab",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A minimalist, privacy-focused new tab page that loads instantly.",
   "chrome_url_overrides": {
     "newtab": "newtab.html"
