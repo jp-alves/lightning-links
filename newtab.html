@@ -59,6 +59,20 @@
         </div>
     </div>
 
+    <div id="workspace-modal" class="modal">
+        <form class="modal-content sheet workspace-sheet" id="workspace-form" role="dialog" aria-modal="true" aria-labelledby="workspace-title" novalidate>
+            <h2 id="workspace-title">New Workspace</h2>
+            <div class="group">
+                <label class="field"><span>Name</span><input type="text" id="workspace-name" maxlength="24" autocomplete="off" placeholder="Work, Study, Home…" aria-describedby="workspace-error"></label>
+            </div>
+            <p class="field-error" id="workspace-error" role="alert"></p>
+            <div class="modal-buttons">
+                <button type="button" id="workspace-cancel" class="btn">Cancel</button>
+                <button type="submit" id="workspace-save" class="btn btn-primary">Create</button>
+            </div>
+        </form>
+    </div>
+
     <div id="settings-modal" class="modal">
         <div class="modal-content sheet settings-content" role="dialog" aria-modal="true" aria-labelledby="settings-title">
             <h2 id="settings-title">Settings</h2>
@@ -81,11 +95,15 @@
                     </div>
                     <div class="row">
                         <label class="row-label" for="h-gap-range">Horizontal spacing</label>
-                        <div class="row-control"><input type="range" id="h-gap-range" min="0" max="100" value="20"><span class="value" id="h-gap-val">20px</span></div>
+                        <div class="row-control"><input type="range" id="h-gap-range" min="-100" max="100" value="20"><span class="value" id="h-gap-val">20px</span></div>
                     </div>
                     <div class="row">
                         <label class="row-label" for="v-gap-range">Vertical spacing</label>
                         <div class="row-control"><input type="range" id="v-gap-range" min="0" max="100" value="20"><span class="value" id="v-gap-val">20px</span></div>
+                    </div>
+                    <div class="row">
+                        <label class="row-label" for="label-range">Name size</label>
+                        <div class="row-control"><input type="range" id="label-range" min="80" max="200" step="5" value="100"><span class="value" id="label-val">100%</span></div>
                     </div>
                 </div>
                 <div class="group">

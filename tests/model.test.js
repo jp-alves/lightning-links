@@ -102,3 +102,11 @@ test('normalizeImport accepts folders with dial items', () => {
     const r = model.normalizeImport({ workspaces: { Home: [f, C] }, settings: {} });
     assert.deepStrictEqual(r.workspaces.Home, [f, C]);
 });
+
+test('workspaceNameError: empty, duplicate and unchanged names', () => {
+    assert.strictEqual(model.workspaceNameError('   ', ['Home']), 'Enter a name.');
+    assert.strictEqual(model.workspaceNameError('home', ['Home', 'Work']), 'A workspace with this name already exists.');
+    assert.strictEqual(model.workspaceNameError('Study', ['Home', 'Work']), null);
+    // Renaming a workspace to its own name (or a case change of it) is fine
+    assert.strictEqual(model.workspaceNameError('work', ['Home', 'Work'], 'Work'), null);
+});

@@ -66,12 +66,13 @@
 
         const v = opts.layout();
         // Never wider than the window: panel padding (2 x 22px) + grid padding (2 x 6px) + page margin
-        const dial = parseFloat(v.dialWidth);
+        const cell = parseFloat(v.cellWidth);
         const gap = parseFloat(v.colGap);
-        const fitCols = Math.max(1, Math.floor((window.innerWidth - 40 - 56 + gap) / (dial + gap)));
+        const fitCols = Math.max(1, Math.floor((window.innerWidth - 40 - 56 + gap) / (cell + gap)));
         const style = els.grid.style;
         style.setProperty('--col-count', Math.min(folder.items.length + 1, v.cols, fitCols));
         style.setProperty('--dial-width', v.dialWidth);
+        style.setProperty('--cell-width', v.cellWidth);
         style.setProperty('--col-gap', v.colGap);
         style.setProperty('--row-gap', v.rowGap);
     }

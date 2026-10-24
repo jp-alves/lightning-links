@@ -86,3 +86,21 @@ test('cellAspect: an icon cell is the icon (60% of the width) plus its label', (
     assert.strictEqual(cellAspect(160), 160 / 122);
     assert.ok(cellAspect(80) < cellAspect(300), 'the label is a bigger share of small cells');
 });
+
+test('negative horizontal spacing makes the grid narrower than the cells alone', () => {
+    // 6 cells of 160 with -40 spacing: cells shrink to 120 each → 720px wide
+    const r = computeFit({ ...base, colGap: -40, availW: 1600, availH: 800, count: 7 });
+    assert.strictEqual(r.colGap, -40);
+    assert.strictEqual(r.dialSize, 160);
+    // Exactly 720px of cells fits in 730px: no shrinking
+    const exact = computeFit({ ...base, colGap: -40, availW: 730, availH: 800, count: 7 });
+    assert.strictEqual(exact.dialSize, 160);
+    const narrow = computeFit({ ...base, colGap: -40, availW: 700, availH: 800, count: 7 });
+    assert.ok(narrow.cols * (narrow.dialSize + narrow.colGap) <= 700, 'shrunk to the width');
+});
+
+test('cellAspect grows the label block with the name size', () => {
+    const { cellAspect } = require('../lib/layout.js');
+    assert.strictEqual(cellAspect(160, 100), cellAspect(160));
+    assert.ok(cellAspect(160, 200) < cellAspect(160, 100), 'bigger names make cells taller');
+});

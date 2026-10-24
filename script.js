@@ -85,6 +85,15 @@
         themeOptions: null,
 
         cacheIconsToggle: null,
+        labelRange: null,
+        labelVal: null,
+        workspaceModal: null,
+        workspaceForm: null,
+        workspaceTitle: null,
+        workspaceName: null,
+        workspaceError: null,
+        workspaceSave: null,
+        workspaceCancel: null,
         autoFitToggle: null,
         workspacesContainer: null,
         iconCacheStatus: null
@@ -144,6 +153,7 @@
         bgImage: 'backgrounds/bg1.jpg',
 
         theme: 'auto',
+        labelScale: 100,
 
         cacheIcons: false,
         autoFit: true
@@ -382,6 +392,15 @@
         DOM.workspacesTabs = document.getElementById('workspaces-tabs');
         DOM.themeOptions = document.getElementById('theme-options');
         DOM.cacheIconsToggle = document.getElementById('cache-icons-toggle');
+        DOM.labelRange = document.getElementById('label-range');
+        DOM.labelVal = document.getElementById('label-val');
+        DOM.workspaceModal = document.getElementById('workspace-modal');
+        DOM.workspaceForm = document.getElementById('workspace-form');
+        DOM.workspaceTitle = document.getElementById('workspace-title');
+        DOM.workspaceName = document.getElementById('workspace-name');
+        DOM.workspaceError = document.getElementById('workspace-error');
+        DOM.workspaceSave = document.getElementById('workspace-save');
+        DOM.workspaceCancel = document.getElementById('workspace-cancel');
         DOM.autoFitToggle = document.getElementById('autofit-toggle');
         DOM.workspacesContainer = document.getElementById('workspaces-container');
         DOM.iconCacheStatus = document.getElementById('icon-cache-status');
@@ -454,13 +473,16 @@
         DOM.vGapRange.value = settings.rowGap;
         DOM.vGapVal.textContent = settings.rowGap + 'px';
 
+        DOM.labelRange.value = labelScale();
+        DOM.labelVal.textContent = labelScale() + '%';
+
         // Appearance: "auto" follows the system light/dark setting
         applyTheme();
         const themeInput = DOM.themeOptions.querySelector(`input[value="${settings.theme || 'auto'}"]`);
         if (themeInput) themeInput.checked = true;
 
         // Filled part of each slider track
-        [DOM.colRange, DOM.sizeRange, DOM.hGapRange, DOM.vGapRange].forEach(input => {
+        [DOM.colRange, DOM.sizeRange, DOM.hGapRange, DOM.vGapRange, DOM.labelRange].forEach(input => {
             const pct = (input.value - input.min) / (input.max - input.min) * 100;
             input.style.setProperty('--pct', pct + '%');
         });
@@ -484,12 +506,17 @@
             colGap: settings.colGap,
             rowGap: settings.rowGap,
             autoFit: settings.autoFit !== false,
-            aspect: LL.layout.cellAspect(settings.dialSize)
+            aspect: LL.layout.cellAspect(settings.dialSize, labelScale())
         });
+        // Negative horizontal spacing narrows the cells (icons move closer, then overlap);
+        // a cell never gets narrower than 30% of the icon cell, so icons stay distinct
+        const cellWidth = Math.max(Math.round(fit.dialSize * 0.3), fit.dialSize + Math.min(fit.colGap, 0));
         const style = DOM.grid.style;
         style.setProperty('--col-count', fit.cols);
         style.setProperty('--dial-width', fit.dialSize + 'px');
-        style.setProperty('--col-gap', fit.colGap + 'px');
+        style.setProperty('--cell-width', cellWidth + 'px');
+        style.setProperty('--col-gap', Math.max(fit.colGap, 0) + 'px');
+        document.documentElement.style.setProperty('--label-scale', labelScale() / 100);
         style.setProperty('--row-gap', fit.rowGap + 'px');
     }
 
@@ -501,6 +528,11 @@
         resizeFrame = requestAnimationFrame(applyLayoutVars);
         clearTimeout(resizeTimer);
         resizeTimer = setTimeout(() => DOM.grid.classList.remove('resizing'), 250);
+    }
+
+    // Name size, as a percentage of the automatic size (older settings have none: 100%)
+    function labelScale() {
+        return Number(settings.labelScale) || 100;
     }
 
     function bgUrl() {
@@ -617,6 +649,7 @@
             layout: () => ({
                 cols: Number(style.getPropertyValue('--col-count')),
                 dialWidth: style.getPropertyValue('--dial-width'),
+                cellWidth: style.getPropertyValue('--cell-width'),
                 colGap: style.getPropertyValue('--col-gap'),
                 rowGap: style.getPropertyValue('--row-gap')
             })
@@ -783,39 +816,7 @@
             const target = e.target;
 
             if (target.id === 'add-workspace-btn') {
-
-                const name = prompt('Enter new workspace name:');
-
-                if (name && name.trim()) {
-
-                    if (Object.keys(workspaces).length >= 5) {
-
-                        alert('Maximum of 5 workspaces allowed.');
-
-                        return;
-
-                    }
-
-                    if (workspaces[name.trim()]) {
-
-                        alert('Workspace name already exists.');
-
-                        return;
-
-                    }
-
-                    workspaces[name.trim()] = [];
-
-                    lastActiveWorkspace = name.trim();
-
-                    saveWorkspaces();
-
-                    renderWorkspacesTabs();
-
-                    renderDials();
-
-                }
-
+                openWorkspaceSheet(null);
             } else if (target.classList.contains('workspace-tab')) {
 
                 const workspaceName = target.dataset.name;
@@ -893,44 +894,19 @@
         // Workspace Context Menu Actions
 
         DOM.ctxEditWorkspace.onclick = () => {
-
-            if (!contextWorkspaceName) return;
-
-            const newName = prompt(`Enter new name for "${contextWorkspaceName}":`, contextWorkspaceName);
-
-            if (newName && newName.trim() && newName.trim() !== contextWorkspaceName) {
-
-                if (workspaces[newName.trim()]) {
-
-                    alert('Workspace name already exists.');
-
-                    return;
-
-                }
-
-                // Update the workspace name
-
-                workspaces[newName.trim()] = workspaces[contextWorkspaceName];
-
-                delete workspaces[contextWorkspaceName];
-
-                // If the active workspace was renamed, update it
-
-                if (lastActiveWorkspace === contextWorkspaceName) {
-
-                    lastActiveWorkspace = newName.trim();
-
-                }
-
-                saveWorkspaces();
-
-                renderWorkspacesTabs();
-
-            }
-
             DOM.workspaceContextMenu.style.display = 'none';
-
+            if (contextWorkspaceName) openWorkspaceSheet(contextWorkspaceName);
         };
+
+        DOM.workspaceForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            saveWorkspaceSheet();
+        });
+        DOM.workspaceName.addEventListener('input', () => {
+            // Clear the message as soon as the name changes; it is re-checked on save
+            DOM.workspaceError.textContent = '';
+        });
+        DOM.workspaceCancel.onclick = closeWorkspaceSheet;
 
         DOM.ctxDeleteWorkspace.onclick = () => {
 
@@ -1065,7 +1041,8 @@
             [DOM.colRange, 'colCount'],
             [DOM.sizeRange, 'dialSize'],
             [DOM.hGapRange, 'colGap'],
-            [DOM.vGapRange, 'rowGap']
+            [DOM.vGapRange, 'rowGap'],
+            [DOM.labelRange, 'labelScale']
         ];
         ranges.forEach(([input, key]) => {
             // Apply live while dragging; persist once on release
@@ -1185,12 +1162,18 @@
         // Close modals on outside click
 
         window.onclick = (e) => {
-
             if (e.target === DOM.addModal) DOM.addModal.style.display = 'none';
-
             if (e.target === DOM.settingsModal) DOM.settingsModal.style.display = 'none';
-
+            if (e.target === DOM.workspaceModal) closeWorkspaceSheet();
         };
+
+        // Esc closes whichever sheet is open, like Cancel
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            if (DOM.workspaceModal.style.display === 'flex') closeWorkspaceSheet();
+            else if (DOM.addModal.style.display === 'flex') DOM.cancelBtn.click();
+            else if (DOM.settingsModal.style.display === 'flex') DOM.settingsModal.style.display = 'none';
+        });
 
         // Drag & drop: dials slide aside to open the landing gap; holding on a
         // dial's centre makes a folder (ui/drag.js)
@@ -1306,6 +1289,49 @@
             });
         };
 
+    }
+
+    // --- Workspace sheet: create (renaming = null) or rename a workspace ---
+    let renamingWorkspace = null;
+
+    function openWorkspaceSheet(name) {
+        renamingWorkspace = name;
+        DOM.workspaceTitle.textContent = name ? 'Rename Workspace' : 'New Workspace';
+        DOM.workspaceSave.textContent = name ? 'Rename' : 'Create';
+        DOM.workspaceName.value = name || '';
+        DOM.workspaceError.textContent = '';
+        DOM.workspaceModal.style.display = 'flex';
+        DOM.workspaceName.focus();
+        DOM.workspaceName.select();
+    }
+
+    function closeWorkspaceSheet() {
+        DOM.workspaceModal.style.display = 'none';
+        renamingWorkspace = null;
+    }
+
+    function saveWorkspaceSheet() {
+        const name = DOM.workspaceName.value.trim();
+        const error = LL.model.workspaceNameError(name, Object.keys(workspaces), renamingWorkspace);
+        if (error) {
+            DOM.workspaceError.textContent = error;
+            DOM.workspaceName.focus();
+            return;
+        }
+        if (renamingWorkspace) {
+            if (name !== renamingWorkspace) {
+                workspaces[name] = workspaces[renamingWorkspace];
+                delete workspaces[renamingWorkspace];
+                if (lastActiveWorkspace === renamingWorkspace) lastActiveWorkspace = name;
+            }
+        } else {
+            workspaces[name] = [];
+            lastActiveWorkspace = name;
+        }
+        closeWorkspaceSheet();
+        saveWorkspaces();
+        renderWorkspacesTabs();
+        renderDials();
     }
 
     function openAddModal() {

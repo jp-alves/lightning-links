@@ -24,8 +24,10 @@
 :root {
     /* Layout (overwritten by init.js / script.js) */
     --col-count: 6;
-    --dial-width: 160px;
+    --dial-width: 160px;          /* sizes the icon (60% of it) */
+    --cell-width: 160px;          /* grid column; narrower than --dial-width when spacing is negative */
     --col-gap: 20px;
+    --label-scale: 1;
     --row-gap: 20px;
     --bg-image: url('backgrounds/bg1.jpg');
 
@@ -233,7 +235,7 @@ button {
 /* --- MAIN GRID --- */
 .container {
     display: grid;
-    grid-template-columns: repeat(var(--col-count), var(--dial-width));
+    grid-template-columns: repeat(var(--col-count), var(--cell-width));
     justify-content: safe center;
     column-gap: var(--col-gap);
     row-gap: var(--row-gap);
@@ -268,6 +270,11 @@ button {
     -webkit-tap-highlight-color: transparent;
 }
 
+/* With negative spacing icons overlap; the one under the pointer comes to the front */
+.dial:hover {
+    z-index: 2;
+}
+
 .dial .icon {
     width: calc(var(--dial-width) * 0.6);
     aspect-ratio: 1;
@@ -288,8 +295,10 @@ button {
 }
 
 .dial > span {
-    max-width: 100%;
-    font-size: clamp(11px, calc(var(--dial-width) * 0.08), 14px);
+    /* At least the icon's width, so names stay readable when cells overlap */
+    max-width: max(100%, calc(var(--dial-width) * 0.6));
+    /* Scales with the icon, times the Name size setting; never below Apple's 10px minimum */
+    font-size: max(10px, calc(clamp(11px, calc(var(--dial-width) * 0.08), 14px) * var(--label-scale)));
     font-weight: 600;
     line-height: 1.25;
     letter-spacing: -0.005em;
@@ -477,7 +486,7 @@ input.folder-name:focus {
 
 .folder-grid {
     display: grid;
-    grid-template-columns: repeat(var(--col-count), var(--dial-width));
+    grid-template-columns: repeat(var(--col-count), var(--cell-width));
     column-gap: var(--col-gap);
     row-gap: var(--row-gap);
     max-height: 70vh;
@@ -907,6 +916,16 @@ input[type=range]:focus-visible::-webkit-slider-thumb {
     font: 13px var(--font);
     outline: none;
     transition: box-shadow 150ms ease-out, background 150ms ease-out;
+}
+
+.field-error {
+    margin: -6px 2px 0;
+    font-size: 12px;
+    color: var(--destructive);
+}
+
+.field-error:empty {
+    display: none;
 }
 
 .field input::placeholder {
