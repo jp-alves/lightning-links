@@ -7,3 +7,17 @@ Thumbs.db
 .idea/
 .vscode/
 .superpowers/
+
+# AI assistant / tooling files (local only)
+.claude/
+.impeccable/
+.superpowers/
+
+# Python caches (from skill scripts)
+__pycache__/
+*.pyc
+
+# Logs and local environment files
+*.log
+.env
+.env.*
