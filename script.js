@@ -1172,53 +1172,18 @@
             try {
 
                 const data = JSON.parse(event.target.result);
-
-                if (data.workspaces && data.settings) { // New format
-
-                    workspaces = data.workspaces;
-
-                    lastActiveWorkspace = data.lastActiveWorkspace || 'Home';
-
-                    settings = data.settings;
-
-                    saveWorkspaces();
-
-                    saveSettings();
-
-                    renderDials();
-
-                    applySettings();
-
-                    renderBackgroundOptions();
-
-                    renderWorkspacesTabs();
-
-                    alert("Import successful!");
-
-                } else if (data.dials && data.settings) { // Old format
-
-                    workspaces['Home'] = data.dials;
-
-                    lastActiveWorkspace = 'Home';
-
-                    settings = data.settings;
-
-                    saveWorkspaces();
-
-                    saveSettings();
-
-                    renderDials();
-
-                    applySettings();
-
-                    renderBackgroundOptions();
-
-                    renderWorkspacesTabs();
-
-                    alert("Old backup format imported successfully into 'Home' workspace!");
-
-                }
-
+                const imported = LL.model.normalizeImport(data);
+                if (!imported) throw new Error('Unrecognised backup');
+                if (data.workspaces) workspaces = imported.workspaces;
+                else workspaces['Home'] = imported.workspaces.Home; // v1.0 single-list backup goes into Home
+                lastActiveWorkspace = imported.lastActiveWorkspace;
+                settings = imported.settings;
+                saveWorkspaces();
+                saveSettings();
+                renderDials();
+                renderBackgroundOptions();
+                renderWorkspacesTabs();
+                alert("Import successful!");
             } catch (err) {
 
                 alert("Error reading file.");
