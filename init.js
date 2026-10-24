@@ -51,6 +51,10 @@
         console.error("Settings load error:", e);
     }
 
+    // Appearance before first paint, so menus and sheets never flash the wrong colours
+    root.dataset.theme = LL.appearance.resolveTheme(settings && settings.theme,
+        window.matchMedia('(prefers-color-scheme: dark)').matches);
+
     // Parsed once here; script.js reuses it instead of parsing again
     window.__LL_BOOT = { settings, bgImage: customBg };
 

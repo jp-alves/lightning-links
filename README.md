@@ -17,6 +17,7 @@ Lightning Links is my attempt to return to basics. No AI, no subscriptions, no s
 ## 🚀 Features
 
 * **Instant Load:** Optimized to render the moment you open a tab.
+* **Feels at Home on a Mac:** App-icon style dials, glass controls, macOS-style menus and settings, and Light/Dark appearance that follows your system.
 * **Smart Preload:** Uses CSS variables to paint the layout immediately, preventing the "white flash" on startup.
 * **Drag & Drop:** Intuitively reorder your shortcuts to match your workflow. The other dials slide aside to show where yours will land.
 * **Folders:** Hold a dial over another one to group them into a folder, just like on a phone. Click the folder to zoom in and pick a site.
@@ -35,6 +36,9 @@ Lightning Links is my attempt to return to basics. No AI, no subscriptions, no s
 ### Background Images
 The beautiful landscape backgrounds included in this extension are from the **National Park Service**. They were sourced from the "Find Your Park" album on Flickr.
 * If you want to view the original high-resolution images, please check them out here: [**National Park Service - Find Your Park**](https://flic.kr/s/aHsmB3hfLR).
+
+### Font
+The interface uses **[Inter](https://rsms.me/inter/)** by Rasmus Andersson, bundled in `fonts/` so it works offline. Inter is licensed under the SIL Open Font License 1.1 (see `fonts/OFL.txt`).
 
 ### Custom Backgrounds
 You can upload any image you want as a background. However, to keep the extension feeling "lightning" fast, file size matters.

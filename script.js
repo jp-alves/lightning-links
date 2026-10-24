@@ -143,7 +143,7 @@
 
         bgImage: 'backgrounds/bg1.jpg',
 
-        theme: 'light',
+        theme: 'auto',
 
         cacheIcons: false,
         autoFit: true
@@ -399,10 +399,11 @@
             const li = document.createElement('li');
 
             li.className = 'workspace-tab';
-
             li.textContent = name;
-
             li.dataset.name = name;
+            li.tabIndex = 0;
+            li.setAttribute('role', 'tab');
+            li.setAttribute('aria-selected', String(name === lastActiveWorkspace));
 
             if (name === lastActiveWorkspace) {
 
@@ -421,8 +422,11 @@
             addButton.className = 'workspace-tab';
 
             addButton.id = 'add-workspace-btn';
-
             addButton.textContent = '+';
+            addButton.tabIndex = 0;
+            addButton.setAttribute('role', 'button');
+            addButton.setAttribute('aria-label', 'Add workspace');
+            addButton.title = 'Add workspace';
 
             DOM.workspacesTabs.appendChild(addButton);
 
@@ -450,21 +454,16 @@
         DOM.vGapRange.value = settings.rowGap;
         DOM.vGapVal.textContent = settings.rowGap + 'px';
 
-        // Apply theme
+        // Appearance: "auto" follows the system light/dark setting
+        applyTheme();
+        const themeInput = DOM.themeOptions.querySelector(`input[value="${settings.theme || 'auto'}"]`);
+        if (themeInput) themeInput.checked = true;
 
-        if (settings.theme === 'dark') {
-
-            document.body.classList.add('dark-mode');
-
-            DOM.themeOptions.querySelector('input[value="dark"]').checked = true;
-
-        } else {
-
-            document.body.classList.remove('dark-mode');
-
-            DOM.themeOptions.querySelector('input[value="light"]').checked = true;
-
-        }
+        // Filled part of each slider track
+        [DOM.colRange, DOM.sizeRange, DOM.hGapRange, DOM.vGapRange].forEach(input => {
+            const pct = (input.value - input.min) / (input.max - input.min) * 100;
+            input.style.setProperty('--pct', pct + '%');
+        });
 
         // Apply cache icons toggle
 
@@ -484,7 +483,8 @@
             dialSize: settings.dialSize,
             colGap: settings.colGap,
             rowGap: settings.rowGap,
-            autoFit: settings.autoFit !== false
+            autoFit: settings.autoFit !== false,
+            aspect: LL.layout.cellAspect(settings.dialSize)
         });
         const style = DOM.grid.style;
         style.setProperty('--col-count', fit.cols);
@@ -505,6 +505,12 @@
 
     function bgUrl() {
         return settings.bgImage === 'custom' ? customBg : settings.bgImage;
+    }
+
+    const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+
+    function applyTheme() {
+        document.documentElement.dataset.theme = LL.appearance.resolveTheme(settings.theme, darkQuery.matches);
     }
 
     function persistSettings() {
@@ -533,9 +539,12 @@
         img.decoding = 'async';
         img.alt = dial.name;
         img.onerror = () => { img.onerror = null; img.src = 'icons/icon128.png'; };
+        const icon = document.createElement('div');
+        icon.className = 'icon';
+        icon.appendChild(img);
         const label = document.createElement('span');
         label.textContent = dial.name;
-        div.append(img, label);
+        div.append(icon, label);
         return div;
     }
 
@@ -546,7 +555,7 @@
         div.dataset.key = 'folder:' + folder.id;
         div.tabIndex = 0;
         const preview = document.createElement('div');
-        preview.className = 'folder-preview';
+        preview.className = 'icon folder-preview';
         folder.items.slice(0, 4).forEach(dial => {
             const img = document.createElement('img');
             img.src = LL.iconcache.resolveIcon(iconCache, dial.img);
@@ -733,7 +742,8 @@
 
             delBtn.className = 'bg-delete-btn';
 
-            delBtn.textContent = 'X';
+            delBtn.textContent = '×';
+            delBtn.setAttribute('aria-label', 'Remove your picture');
 
             delBtn.title = 'Remove custom background';
 
@@ -1076,12 +1086,22 @@
         // Theme options
 
         DOM.themeOptions.onchange = (e) => {
-
             settings.theme = e.target.value;
-
             saveSettings();
-
         };
+
+        darkQuery.addEventListener('change', applyTheme);
+
+        // Workspace tabs and the + icon are not native buttons: Enter / Space activate them
+        const activateOnKey = (e) => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            e.preventDefault();
+            e.target.click();
+        };
+        DOM.workspacesTabs.addEventListener('keydown', (e) => {
+            if (e.target.classList.contains('workspace-tab')) activateOnKey(e);
+        });
+        DOM.addBtn.addEventListener('keydown', activateOnKey);
 
         // Cache icons toggle
 
@@ -1291,7 +1311,7 @@
     function openAddModal() {
         editingTarget = null;
         addFolderId = openFolderId;
-        DOM.modalTitle.textContent = "Add New Website";
+        DOM.modalTitle.textContent = "Add Website";
         clearInputs();
         DOM.addModal.style.display = 'flex';
     }

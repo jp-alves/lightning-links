@@ -1,16 +1,85 @@
+/* Lightning Links — styled after macOS / iOS.
+   Two layers, as in Apple's design: the content (wallpaper + app icons) stays opaque and calm;
+   only the floating controls (workspace switcher, settings button, menus, sheets, folder panel)
+   are glass. */
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url('fonts/inter-latin.woff2') format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+    font-family: 'Inter';
+    font-style: normal;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url('fonts/inter-latin-ext.woff2') format('woff2');
+    unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
 :root {
-    /* Default Values (Overwritten by init.js) */
+    /* Layout (overwritten by init.js / script.js) */
     --col-count: 6;
     --dial-width: 160px;
     --col-gap: 20px;
     --row-gap: 20px;
     --bg-image: url('backgrounds/bg1.jpg');
+
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+    --ease: cubic-bezier(.2, .7, .3, 1);
+
+    /* Apple system colours, light appearance */
+    --label: #1d1d1f;
+    --label-secondary: #6e6e73;          /* 5.1:1 on white */
+    --accent: #0071e3;                   /* white text on it: 4.9:1 */
+    --accent-ring: rgba(0, 113, 227, 0.45);
+    --destructive: #d70015;              /* 5.4:1 on white */
+    --toggle-on: #34c759;
+    --toggle-off: rgba(120, 120, 128, 0.32);
+    --separator: rgba(60, 60, 67, 0.16);
+    --fill: rgba(118, 118, 128, 0.12);
+    --fill-hover: rgba(118, 118, 128, 0.2);
+
+    /* Materials */
+    --material: rgba(246, 246, 248, 0.8);       /* menus, sheets */
+    --material-solid: #f5f5f7;
+    --group: rgba(255, 255, 255, 0.72);
+    --segment-on: #ffffff;
+    --hairline: rgba(255, 255, 255, 0.6);
+    --menu-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.14), 0 12px 32px rgba(0, 0, 0, 0.22);
+    --sheet-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.12), 0 28px 70px rgba(0, 0, 0, 0.35);
+}
+
+:root[data-theme="dark"] {
+    --label: #f5f5f7;
+    --label-secondary: #a1a1a6;          /* 6.6:1 on #2c2c2e */
+    --accent: #0071e3;
+    --accent-ring: rgba(64, 156, 255, 0.55);
+    --destructive: #ff6961;              /* 5.1:1 on #2c2c2e */
+    --separator: rgba(255, 255, 255, 0.12);
+    --fill: rgba(118, 118, 128, 0.24);
+    --fill-hover: rgba(118, 118, 128, 0.34);
+
+    --material: rgba(40, 40, 44, 0.78);
+    --material-solid: #2c2c2e;
+    --group: rgba(255, 255, 255, 0.06);
+    --segment-on: #636366;
+    --hairline: rgba(255, 255, 255, 0.14);
+    --menu-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.5), 0 12px 32px rgba(0, 0, 0, 0.45);
+    --sheet-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.6), 0 28px 70px rgba(0, 0, 0, 0.55);
 }
 
 body {
     margin: 0;
     padding: 0;
-    font-family: 'Segoe UI', sans-serif;
+    font-family: var(--font);
+    font-feature-settings: 'cv11', 'ss01';
+    -webkit-font-smoothing: antialiased;
+    color: var(--label);
     height: 100vh;
     display: flex;
     align-items: center;
@@ -38,28 +107,130 @@ body::before {
     opacity: 1;
 }
 
-/* --- SETTINGS BUTTONS --- */
+button {
+    font-family: inherit;
+}
+
+:focus-visible {
+    outline: 3px solid var(--accent-ring);
+    outline-offset: 2px;
+}
+
+.icon-sprite {
+    position: absolute;
+    width: 0;
+    height: 0;
+    overflow: hidden;
+}
+
+.sym {
+    width: 16px;
+    height: 16px;
+    flex: none;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+/* --- GLASS: the floating controls over the wallpaper --- */
+.glass {
+    background: rgba(30, 30, 32, 0.24);
+    -webkit-backdrop-filter: blur(24px) saturate(1.6);
+    backdrop-filter: blur(24px) saturate(1.6);
+    box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 6px 20px rgba(0, 0, 0, 0.16);
+}
+
+/* --- SETTINGS BUTTON --- */
 .settings-trigger {
     position: absolute;
-    top: 20px;
-    right: 20px;
-    background: rgba(0, 0, 0, 0.6);
-    color: white;
+    top: 16px;
+    right: 16px;
+    width: 36px;
+    height: 36px;
     border: none;
-    padding: 10px 15px;
-    border-radius: 20px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: #fff;
     cursor: pointer;
-    backdrop-filter: blur(5px);
     z-index: 100;
-    transition: background 0.2s;
-    font-weight: 600;
+    transition: transform 160ms var(--ease), background 160ms ease-out;
+}
+
+.settings-trigger .sym {
+    width: 18px;
+    height: 18px;
+    stroke-width: 1.6;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.3));
 }
 
 .settings-trigger:hover {
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(30, 30, 32, 0.36);
 }
 
-/* --- MAIN GRID CONTAINER --- */
+.settings-trigger:active {
+    transform: scale(0.92);
+}
+
+/* --- WORKSPACES: a glass segmented control --- */
+#workspaces-container {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    border-radius: 999px;
+    padding: 3px;
+    z-index: 100;
+}
+
+#workspaces-tabs {
+    list-style: none;
+    display: flex;
+    gap: 2px;
+    margin: 0;
+    padding: 0;
+}
+
+.workspace-tab {
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    padding: 8px 14px;
+    border-radius: 999px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 160ms ease-out, color 160ms ease-out;
+}
+
+.workspace-tab:hover {
+    background: rgba(255, 255, 255, 0.14);
+}
+
+.workspace-tab.active {
+    background: rgba(255, 255, 255, 0.92);
+    color: #1d1d1f;
+    text-shadow: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.18);
+}
+
+#add-workspace-btn {
+    padding: 8px 11px;
+    font-weight: 400;
+}
+
+/* --- MAIN GRID --- */
 .container {
     display: grid;
     grid-template-columns: repeat(var(--col-count), var(--dial-width));
@@ -83,36 +254,75 @@ body::before {
     display: none;
 }
 
-/* --- DIAL CARDS --- */
+/* --- DIALS: app icons with their name underneath --- */
 .dial {
-    background: white;
-    border-radius: 8px;
     width: 100%;
-    aspect-ratio: 1.3 / 1;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
+    gap: 8px;
     text-decoration: none;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
     cursor: pointer;
     position: relative;
-    padding: 8px;
-    box-sizing: border-box;
-    transition: transform 180ms cubic-bezier(.2, .7, .3, 1), box-shadow 180ms ease-out;
     user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.dial:hover {
-    transform: translateY(-4px) scale(1.03);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.22);
-    z-index: 10;
-    will-change: transform;
+.dial .icon {
+    width: calc(var(--dial-width) * 0.6);
+    aspect-ratio: 1;
+    border-radius: 22.5%;
+    background: #fff;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.1), 0 8px 20px rgba(0, 0, 0, 0.2);
+    transition: transform 180ms var(--ease), box-shadow 180ms ease-out;
+}
+
+.dial .icon img {
+    width: 66%;
+    height: 66%;
+    object-fit: contain;
+    pointer-events: none;
+}
+
+.dial > span {
+    max-width: 100%;
+    font-size: clamp(11px, calc(var(--dial-width) * 0.08), 14px);
+    font-weight: 600;
+    line-height: 1.25;
+    letter-spacing: -0.005em;
+    color: #fff;
+    text-align: center;
+    /* Layered shadow keeps white labels readable on bright wallpapers (snow, sand, sky) */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6), 0 0 6px rgba(0, 0, 0, 0.45), 0 0 14px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dial:hover .icon {
+    transform: translateY(-3px);
+    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.06), 0 4px 8px rgba(0, 0, 0, 0.12), 0 14px 28px rgba(0, 0, 0, 0.26);
+}
+
+.dial:active .icon {
+    transform: scale(0.94);
+    transition-duration: 90ms;
+}
+
+.dial:focus-visible {
+    outline: none;
+}
+
+.dial:focus-visible .icon {
+    box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--accent), 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
 /* New dial fades and scales into place */
 .dial.entering {
-    animation: dial-enter 200ms cubic-bezier(.2, .7, .3, 1);
+    animation: dial-enter 200ms var(--ease);
 }
 
 @keyframes dial-enter {
@@ -122,34 +332,53 @@ body::before {
     }
 }
 
-@media (prefers-reduced-motion: reduce) {
-    .dial,
-    .folder-name,
-    .container.resizing {
-        transition-duration: 1ms !important;
-        animation-duration: 1ms !important;
-    }
+/* --- ADD BUTTON: an empty glass icon --- */
+.add-btn .icon {
+    background: rgba(255, 255, 255, 0.16);
+    -webkit-backdrop-filter: blur(20px) saturate(1.5);
+    backdrop-filter: blur(20px) saturate(1.5);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.38);
+    color: #fff;
 }
 
-.dial img {
-    width: 65%;
-    height: 65%;
-    object-fit: contain;
-    margin-bottom: 5px;
-    border-radius: 4px;
-    pointer-events: none;
+.add-btn .icon .sym {
+    width: 36%;
+    height: 36%;
+    stroke-width: 1.5;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
-.dial span {
-    color: #444;
-    font-size: clamp(11px, calc(var(--dial-width) * 0.085), 16px);
-    font-weight: 600;
-    text-align: center;
+.add-btn:hover .icon {
+    background: rgba(255, 255, 255, 0.26);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55), 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
+/* --- FOLDERS: glass icons holding small app icons, as in iOS --- */
+.dial.folder .icon {
+    background: rgba(255, 255, 255, 0.24);
+    -webkit-backdrop-filter: blur(20px) saturate(1.6);
+    backdrop-filter: blur(20px) saturate(1.6);
+    box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 8px 20px rgba(0, 0, 0, 0.18);
+}
+
+.folder-preview {
+    display: grid;
+    grid-template-columns: repeat(2, 33%);
+    gap: 9%;
+    place-content: center;
+}
+
+/* More specific than `.dial .icon img`, which sizes a single logo */
+.dial .folder-preview img {
     width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-    margin-top: auto;
+    height: auto;
+    aspect-ratio: 1;
+    box-sizing: border-box;
+    padding: 14%;
+    object-fit: contain;
+    background: #fff;
+    border-radius: 24%;
+    pointer-events: none;
 }
 
 /* --- DRAG & DROP STATES --- */
@@ -166,67 +395,26 @@ body::before {
 
 .dial.dragging {
     z-index: 1000;
-    opacity: 0.95;
     cursor: grabbing;
-    box-shadow: 0 18px 36px rgba(0, 0, 0, 0.3);
-    transition: box-shadow 180ms ease-out;
     will-change: transform;
 }
 
+.dial.dragging .icon {
+    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.06), 0 10px 20px rgba(0, 0, 0, 0.2), 0 22px 44px rgba(0, 0, 0, 0.3);
+}
+
 /* While dragging, the hover lift would fight the sliding transforms */
-.drag-active .dial:hover:not(.dragging) {
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+.drag-active .dial:hover:not(.dragging) .icon {
+    transform: none;
 }
 
-/* Holding a dial over another one: it will become a folder */
-.dial.group-target {
+/* Holding an icon over another one: they will become a folder */
+.dial.group-target .icon {
+    transform: scale(1.12);
     box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.9), 0 12px 28px rgba(0, 0, 0, 0.3);
-    scale: 1.08;
-    transition: scale 150ms ease-out, box-shadow 150ms ease-out, transform 200ms cubic-bezier(.2, .7, .3, 1);
 }
 
-/* --- FOLDERS --- */
-.dial.folder {
-    background: rgba(255, 255, 255, 0.5);
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18), inset 0 0 0 1px rgba(255, 255, 255, 0.35);
-}
-
-.dial.folder span {
-    color: #333;
-}
-
-.dark-mode .dial.folder span {
-    color: #f2f2f2;
-}
-
-.folder-preview {
-    display: grid;
-    grid-template-columns: repeat(2, 28%);
-    grid-auto-rows: auto;
-    gap: 6% 8%;
-    justify-content: center;
-    align-content: center;
-    width: 100%;
-    flex: 1;
-    min-height: 0;
-}
-
-.folder-preview img {
-    width: 100%;
-    aspect-ratio: 1;
-    object-fit: contain;
-    border-radius: 4px;
-    pointer-events: none;
-}
-
-.dark-mode .dial.folder {
-    background: rgba(30, 30, 30, 0.45);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 0 0 1px rgba(255, 255, 255, 0.12);
-}
-
-/* Opened folder: blurred page behind a frosted panel */
+/* --- OPENED FOLDER: blurred page behind a large glass panel --- */
 .folder-layer {
     position: fixed;
     inset: 0;
@@ -243,9 +431,9 @@ body::before {
 .folder-backdrop {
     position: absolute;
     inset: 0;
-    background: rgba(0, 0, 0, 0.35);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
+    background: rgba(0, 0, 0, 0.28);
+    -webkit-backdrop-filter: blur(20px) saturate(1.2);
+    backdrop-filter: blur(20px) saturate(1.2);
 }
 
 .folder-wrap {
@@ -253,7 +441,7 @@ body::before {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 14px;
+    gap: 16px;
     max-width: calc(100vw - 40px);
     transform-origin: center;
 }
@@ -261,45 +449,30 @@ body::before {
 input.folder-name {
     background: transparent;
     border: none;
-    border-radius: 8px;
+    border-radius: 10px;
     color: #fff;
-    font: 700 24px 'Segoe UI', sans-serif;
+    font: 600 26px/1.2 var(--font);
+    letter-spacing: -0.015em;
     text-align: center;
-    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
-    padding: 4px 10px;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+    padding: 4px 12px;
     width: min(420px, 80vw);
     outline: none;
     transition: background 150ms ease-out;
 }
 
-.dark-mode input.folder-name[type="text"] {
-    background: transparent;
-    border: none;
-    color: #fff;
-}
-
 input.folder-name:hover,
 input.folder-name:focus {
-    background: rgba(255, 255, 255, 0.15);
-}
-
-.dark-mode input.folder-name[type="text"]:hover,
-.dark-mode input.folder-name[type="text"]:focus {
-    background: rgba(255, 255, 255, 0.15);
+    background: rgba(255, 255, 255, 0.14);
 }
 
 .folder-panel {
-    background: rgba(255, 255, 255, 0.25);
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
-    border-radius: 22px;
+    background: rgba(255, 255, 255, 0.16);
+    -webkit-backdrop-filter: blur(30px) saturate(1.6);
+    backdrop-filter: blur(30px) saturate(1.6);
+    border-radius: 34px;
     padding: 22px;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35), inset 0 0 0 1px rgba(255, 255, 255, 0.3);
-}
-
-.dark-mode .folder-panel {
-    background: rgba(30, 30, 30, 0.45);
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 30px 70px rgba(0, 0, 0, 0.3);
 }
 
 .folder-grid {
@@ -313,72 +486,66 @@ input.folder-name:focus {
     padding: 6px;
 }
 
-/* --- ADD BUTTON --- */
-.add-btn {
-    border: 2px dashed rgba(255, 255, 255, 0.5);
-    background: rgba(255, 255, 255, 0.15);
-    backdrop-filter: blur(5px);
-    box-shadow: none;
-
-    /* Override dial's flex properties completely */
-    flex-direction: row !important;
-    align-items: center !important;
-    justify-content: center !important;
-    padding: 0 !important;
-}
-
-.add-btn:hover {
-    background: rgba(255, 255, 255, 0.3);
-    border-color: white;
-    transform: scale(1.02);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
-
-.plus {
-    font-size: 30px !important;
-    color: #fff;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-    font-weight: 50;
-    line-height: 1;
-    margin: 0 !important;
-    padding: 0 !important;
-}
-
-
-/* --- CONTEXT MENU (RIGHT CLICK) --- */
+/* --- CONTEXT MENUS (macOS) --- */
 .context-menu {
     display: none;
     position: absolute;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-    padding: 5px 0;
-    min-width: 150px;
+    min-width: 220px;
+    padding: 5px;
+    border-radius: 12px;
+    background: var(--material);
+    -webkit-backdrop-filter: blur(30px) saturate(1.8);
+    backdrop-filter: blur(30px) saturate(1.8);
+    box-shadow: inset 0 0 0 0.5px var(--hairline), var(--menu-shadow);
     z-index: 1000;
-    animation: fadeIn 0.1s ease-out;
+    animation: menu-in 120ms ease-out;
+    user-select: none;
+}
+
+@keyframes menu-in {
+    from {
+        opacity: 0;
+        transform: scale(0.97);
+    }
 }
 
 .context-menu-item {
-    padding: 10px 15px;
-    cursor: pointer;
-    font-size: 14px;
-    color: #333;
-    transition: background 0.1s;
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 9px;
+    min-height: 28px;
+    padding: 0 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    color: var(--label);
+    cursor: pointer;
+}
+
+.context-menu-item .sym {
+    width: 15px;
+    height: 15px;
+    stroke-width: 1.6;
+    opacity: 0.85;
 }
 
 .context-menu-item:hover {
-    background-color: #f0f0f0;
+    background: var(--accent);
+    color: #fff;
 }
 
 .context-menu-item.delete {
-    color: #ff4444;
+    color: var(--destructive);
 }
 
 .context-menu-item.delete:hover {
-    background-color: #fff0f0;
+    background: #d70015;
+    color: #fff;
+}
+
+.menu-separator {
+    height: 0.5px;
+    margin: 5px 10px;
+    background: var(--separator);
 }
 
 /* --- TOAST --- */
@@ -387,13 +554,15 @@ input.folder-name:focus {
     left: 50%;
     bottom: 32px;
     transform: translate(-50%, 8px);
-    background: rgba(20, 20, 20, 0.85);
+    background: rgba(30, 30, 32, 0.72);
+    -webkit-backdrop-filter: blur(24px) saturate(1.6);
+    backdrop-filter: blur(24px) saturate(1.6);
+    box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.2), 0 8px 24px rgba(0, 0, 0, 0.25);
     color: #fff;
     padding: 10px 18px;
-    border-radius: 20px;
-    font-size: 14px;
-    font-weight: 600;
-    backdrop-filter: blur(6px);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
     opacity: 0;
     pointer-events: none;
     transition: opacity 200ms ease-out, transform 200ms ease-out;
@@ -405,94 +574,209 @@ input.folder-name:focus {
     transform: translate(-50%, 0);
 }
 
-.dark-mode .toast {
-    background: rgba(255, 255, 255, 0.9);
-    color: #222;
-}
-
-/* --- MODALS --- */
+/* --- SHEETS (Add / Edit, Settings) --- */
 .modal {
     display: none;
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
+    inset: 0;
+    background: rgba(0, 0, 0, 0.22);
     justify-content: center;
     align-items: center;
     z-index: 200;
-    backdrop-filter: blur(3px);
 }
 
 .modal-content {
-    background: white;
-    padding: 25px;
-    border-radius: 12px;
-    width: 350px;
     display: flex;
     flex-direction: column;
-    gap: 15px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    animation: fadeIn 0.2s ease-out;
+    gap: 14px;
+    width: 400px;
+    max-width: calc(100vw - 32px);
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+    box-sizing: border-box;
+    padding: 20px 22px;
+    border-radius: 18px;
+    background: var(--material);
+    -webkit-backdrop-filter: blur(40px) saturate(1.8);
+    backdrop-filter: blur(40px) saturate(1.8);
+    box-shadow: inset 0 0 0 0.5px var(--hairline), var(--sheet-shadow);
+    color: var(--label);
+    animation: sheet-in 220ms var(--ease);
 }
 
 .settings-content {
-    width: 500px;
+    width: 540px;
+    min-height: 420px;
 }
 
-@keyframes fadeIn {
+@keyframes sheet-in {
     from {
         opacity: 0;
-        transform: translateY(10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
+        transform: translateY(8px) scale(0.98);
     }
 }
 
-/* --- SETTINGS UI --- */
-.setting-row {
-    margin-bottom: 20px;
-}
-
-.setting-row label {
-    display: block;
-    font-weight: bold;
-    margin-bottom: 8px;
-    color: #555;
-    font-size: 14px;
-}
-
-input[type=range] {
-    width: 100%;
-    cursor: pointer;
-}
-
-/* Tabs */
-.tabs {
-    display: flex;
-    border-bottom: 2px solid #eee;
-    margin-bottom: 20px;
-}
-
-.tab {
-    padding: 10px 20px;
-    cursor: pointer;
+.modal-content h2 {
+    margin: 0;
+    font-size: 15px;
     font-weight: 600;
-    color: #888;
-    transition: color 0.2s;
+    text-align: center;
+    letter-spacing: -0.01em;
 }
 
-.tab:hover {
-    color: #555;
+.modal-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: auto;
+    padding-top: 4px;
 }
 
-.tab.active {
-    color: #2196F3;
-    border-bottom: 3px solid #2196F3;
+/* Grouped rows, as in System Settings */
+.group {
+    background: var(--group);
+    border-radius: 10px;
+    box-shadow: 0 0 0 0.5px var(--separator);
+}
+
+.group + .group {
+    margin-top: 12px;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    min-height: 44px;
+    box-sizing: border-box;
+    padding: 8px 12px;
+}
+
+.row + .row {
+    border-top: 0.5px solid var(--separator);
+}
+
+.row-label {
+    font-size: 13px;
+    color: var(--label);
+}
+
+.sub-label {
+    display: block;
+    margin-top: 3px;
+    font-size: 11.5px;
+    line-height: 1.35;
+    color: var(--label-secondary);
+}
+
+.sub-label:empty {
+    display: none;
+}
+
+.row-control,
+.row-buttons {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: none;
+}
+
+.value {
+    min-width: 40px;
+    font-size: 12.5px;
+    color: var(--label-secondary);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+}
+
+/* Sliders */
+input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 190px;
+    height: 20px;
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+input[type=range]::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--accent) var(--pct, 50%), var(--fill-hover) var(--pct, 50%));
+}
+
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px;
+    height: 20px;
+    margin-top: -8px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.12), 0 2px 5px rgba(0, 0, 0, 0.22);
+}
+
+input[type=range]:focus-visible {
+    outline: none;
+}
+
+input[type=range]:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 3px var(--accent-ring), 0 2px 5px rgba(0, 0, 0, 0.22);
+}
+
+/* Segmented control: settings tabs and the appearance picker */
+.segmented {
+    display: inline-flex;
+    align-self: center;
+    gap: 2px;
+    padding: 2px;
+    border-radius: 9px;
+    background: var(--fill);
+}
+
+.tabs {
+    margin: 2px auto 6px;
+}
+
+.segmented .tab,
+.segmented label span {
+    display: block;
+    border: none;
+    background: transparent;
+    color: var(--label);
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 1;
+    padding: 7px 16px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background 150ms ease-out;
+}
+
+.segmented.small label span {
+    padding: 6px 12px;
+}
+
+.segmented .tab:hover,
+.segmented label:hover span {
+    background: var(--fill);
+}
+
+.segmented .tab.active,
+.segmented input:checked + span {
+    background: var(--segment-on);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+}
+
+.segmented input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.segmented input:focus-visible + span {
+    outline: 3px solid var(--accent-ring);
 }
 
 .tab-pane {
@@ -503,316 +787,254 @@ input[type=range] {
     display: block;
 }
 
-/* --- BACKGROUND GRID & DELETE BTN --- */
+/* Switches */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    flex: none;
+    width: 38px;
+    height: 22px;
+}
+
+.toggle-switch input {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    cursor: pointer;
+    z-index: 1;
+}
+
+.toggle-switch .slider {
+    position: absolute;
+    inset: 0;
+    border-radius: 999px;
+    background: var(--toggle-off);
+    transition: background 200ms ease-out;
+}
+
+.toggle-switch .slider::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+    transition: transform 200ms var(--ease);
+}
+
+.toggle-switch input:checked + .slider {
+    background: var(--toggle-on);
+}
+
+.toggle-switch input:checked + .slider::before {
+    transform: translateX(16px);
+}
+
+.toggle-switch input:focus-visible + .slider {
+    outline: 3px solid var(--accent-ring);
+    outline-offset: 2px;
+}
+
+/* Buttons */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 28px;
+    padding: 0 14px;
+    border: none;
+    border-radius: 7px;
+    background: var(--fill);
+    color: var(--label);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 150ms ease-out, transform 120ms var(--ease);
+}
+
+.btn:hover {
+    background: var(--fill-hover);
+}
+
+.btn:active {
+    transform: scale(0.97);
+}
+
+.btn-primary {
+    background: var(--accent);
+    color: #fff;
+    min-width: 76px;
+}
+
+.btn-primary:hover {
+    background: #0077ed;
+}
+
+/* Text fields in the Add / Edit sheet */
+.field {
+    display: grid;
+    grid-template-columns: 70px 1fr;
+    align-items: center;
+    gap: 12px;
+    padding: 6px 12px;
+}
+
+.field + .field {
+    border-top: 0.5px solid var(--separator);
+}
+
+.field span {
+    font-size: 13px;
+    color: var(--label-secondary);
+    text-align: right;
+}
+
+.field input {
+    width: 100%;
+    box-sizing: border-box;
+    height: 30px;
+    padding: 0 8px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: var(--label);
+    font: 13px var(--font);
+    outline: none;
+    transition: box-shadow 150ms ease-out, background 150ms ease-out;
+}
+
+.field input::placeholder {
+    color: var(--label-secondary);
+    opacity: 0.7;
+}
+
+.field input:focus {
+    background: var(--group);
+    box-shadow: 0 0 0 3px var(--accent-ring);
+}
+
+/* Wallpaper picker */
 .bg-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 10px;
+    margin-bottom: 12px;
 }
 
 .bg-wrapper {
     position: relative;
-    width: 100%;
-    height: 80px;
+    height: 84px;
 }
 
 .bg-option {
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: 6px;
+    border-radius: 10px;
     cursor: pointer;
-    border: 3px solid transparent;
-    transition: opacity 0.2s;
+    box-shadow: 0 0 0 0.5px var(--separator);
+    transition: box-shadow 150ms ease-out, filter 150ms ease-out;
 }
 
 .bg-option:hover {
-    opacity: 0.8;
+    filter: brightness(1.06);
 }
 
 .bg-option.selected {
-    border-color: #2196F3;
+    box-shadow: 0 0 0 2px var(--material-solid), 0 0 0 4.5px var(--accent);
 }
 
 .bg-delete-btn {
     position: absolute;
-    top: -8px;
-    right: -8px;
-    background: #ff4444;
-    color: white;
-    border: 2px solid white;
+    top: -7px;
+    right: -7px;
+    width: 22px;
+    height: 22px;
+    padding: 0;
+    border: none;
     border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    font-family: sans-serif;
-    font-weight: bold;
-    font-size: 14px;
+    background: rgba(60, 60, 67, 0.88);
+    color: #fff;
+    font-size: 15px;
     line-height: 22px;
     text-align: center;
     cursor: pointer;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 0 1.5px var(--material-solid), 0 2px 4px rgba(0, 0, 0, 0.25);
     z-index: 10;
-    transition: transform 0.2s, background 0.2s;
-    padding: 0;
 }
 
 .bg-delete-btn:hover {
-    background: #cc0000;
-    transform: scale(1.1);
+    background: var(--destructive);
 }
 
-/* --- FORMS & BUTTONS --- */
-input[type="text"] {
-    padding: 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 14px;
+/* --- ACCESSIBILITY PREFERENCES --- */
+@media (prefers-reduced-motion: reduce) {
+    .dial .icon,
+    .folder-name,
+    .context-menu,
+    .modal-content,
+    .toggle-switch .slider::before,
+    .container.resizing {
+        transition-duration: 1ms !important;
+        animation-duration: 1ms !important;
+    }
 }
 
-input[type="file"] {
-    font-size: 13px;
-    padding: 8px;
-    background: #f9f9f9;
-    border: 1px dashed #ddd;
-    border-radius: 5px;
-    width: 100%;
-    box-sizing: border-box;
+/* Reduce Transparency: solid surfaces instead of glass */
+@media (prefers-reduced-transparency: reduce) {
+    .glass,
+    .toast {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        background: rgba(30, 30, 32, 0.92);
+    }
+
+    .context-menu,
+    .modal-content {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        background: var(--material-solid);
+    }
+
+    .folder-backdrop,
+    .folder-panel,
+    .dial.folder .icon,
+    .add-btn .icon {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+    }
+
+    .folder-backdrop {
+        background: rgba(0, 0, 0, 0.6);
+    }
+
+    .folder-panel {
+        background: rgba(44, 44, 46, 0.95);
+    }
+
+    .dial.folder .icon,
+    .add-btn .icon {
+        background: rgba(44, 44, 46, 0.85);
+    }
 }
 
-.modal-buttons {
-    display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-}
+/* Increase Contrast: firmer edges and labels */
+@media (prefers-contrast: more) {
+    .glass,
+    .context-menu,
+    .modal-content,
+    .group {
+        box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.7), var(--menu-shadow);
+    }
 
-button {
-    padding: 10px 18px;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-    transition: opacity 0.2s;
-}
-
-button:hover {
-    opacity: 0.9;
-}
-
-#save-btn {
-    background: #2196F3;
-    color: white;
-}
-
-#cancel-btn,
-#close-settings {
-    background: #e0e0e0;
-    color: #333;
-}
-
-#export-btn {
-    background: #4CAF50;
-    color: white;
-}
-
-#import-trigger {
-    background: #FF9800;
-    color: white;
-}
-
-/* --- WORKSPACES TABS --- */
-#workspaces-container {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    background: rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(8px);
-    border-radius: 8px;
-    padding: 5px;
-    z-index: 100;
-}
-
-#workspaces-tabs {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    gap: 5px;
-}
-
-.workspace-tab {
-    padding: 4px 10px;
-    color: #f0f0f0;
-    font-weight: 600;
-    font-size: 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-    position: relative;
-}
-
-.workspace-tab:hover {
-    background: rgba(255, 255, 255, 0.2);
-    color: #fff;
-}
-
-.workspace-tab.active {
-    background: #2196F3;
-    color: white;
-}
-
-#add-workspace-btn {
-    background: rgba(255, 255, 255, 0.3);
-    color: white;
-    font-weight: bold;
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 4px;
-    padding: 4px 10px;
-}
-
-/* --- DARK MODE --- */
-.dark-mode {
-    color: #f0f0f0;
-}
-
-.dark-mode .modal-content {
-    background: #2a2a2e;
-    color: #f0f0f0;
-}
-
-.dark-mode .setting-row label {
-    color: #bbb;
-}
-
-.dark-mode .tabs {
-    border-bottom-color: #444;
-}
-
-.dark-mode .tab {
-    color: #999;
-}
-
-.dark-mode .tab:hover {
-    color: #ccc;
-}
-
-.dark-mode .tab.active {
-    color: #2196F3;
-    border-bottom-color: #2196F3;
-}
-
-.dark-mode input[type="text"] {
-    background: #3a3a3e;
-    border-color: #555;
-    color: #f0f0f0;
-}
-
-.dark-mode #cancel-btn,
-.dark-mode #close-settings {
-    background: #f0f0f0;
-    color: #333;
-}
-
-.dark-mode #workspaces-container {
-    background: rgba(255, 255, 255, 0.8);
-    backdrop-filter: blur(8px);
-}
-
-.dark-mode .workspace-tab {
-    color: #333;
-}
-
-.dark-mode .workspace-tab:hover {
-    background: rgba(0, 0, 0, 0.1);
-    color: #000;
-}
-
-.dark-mode .workspace-tab.active {
-    background: #2196F3;
-    color: white;
-}
-
-.dark-mode #add-workspace-btn {
-    background: rgba(0, 0, 0, 0.15);
-    color: #333;
-}
-
-.dark-mode .context-menu {
-    background: #3a3a3e;
-}
-
-.dark-mode .context-menu-item {
-    color: #f0f0f0;
-}
-
-.dark-mode .context-menu-item:hover {
-    background-color: #4a4a4e;
-}
-
-.dark-mode .context-menu-item.delete {
-    color: #ff5555;
-}
-
-.dark-mode .context-menu-item.delete:hover {
-    background-color: #5e3a3e;
-}
-
-.dark-mode .settings-trigger {
-    background: rgba(255, 255, 255, 0.8);
-    color: #333;
-}
-
-/* --- TOGGLE SWITCH --- */
-.sub-label {
-    font-size: 12px;
-    color: #888;
-    font-weight: normal;
-    margin-top: 4px;
-}
-
-.toggle-switch {
-    position: relative;
-    display: inline-block;
-    width: 50px;
-    height: 28px;
-}
-
-.toggle-switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-}
-
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: #ccc;
-    transition: .4s;
-    border-radius: 28px;
-}
-
-.slider:before {
-    position: absolute;
-    content: "";
-    height: 20px;
-    width: 20px;
-    left: 4px;
-    bottom: 4px;
-    background-color: white;
-    transition: .4s;
-    border-radius: 50%;
-}
-
-input:checked+.slider {
-    background-color: #2196F3;
-}
-
-input:checked+.slider:before {
-    transform: translateX(22px);
+    .dial > span,
+    .workspace-tab {
+        text-shadow: 0 0 2px #000, 0 1px 3px #000;
+    }
 }

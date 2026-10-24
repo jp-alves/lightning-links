@@ -57,7 +57,10 @@
         const add = document.createElement('div');
         add.className = 'dial add-btn folder-add';
         add.dataset.key = 'add';
-        add.innerHTML = '<span class="plus">+</span>';
+        add.setAttribute('role', 'button');
+        add.setAttribute('aria-label', 'Add website to this folder');
+        add.tabIndex = 0;
+        add.innerHTML = '<div class="icon"><svg class="sym"><use href="#i-plus"/></svg></div><span aria-hidden="true">&nbsp;</span>';
         frag.appendChild(add);
         els.grid.replaceChildren(frag);
 

@@ -1,140 +1,180 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+    <meta charset="utf-8">
     <title>New Tab</title>
     <link rel="icon" type="image/png" href="icons/icon128.png">
     <link rel="preconnect" href="https://www.google.com">
+    <link rel="preload" href="fonts/inter-latin.woff2" as="font" type="font/woff2" crossorigin>
     <link rel="stylesheet" href="styles.css">
+    <script src="lib/appearance.js"></script>
     <script src="init.js"></script>
 </head>
 
 <body>
 
-    <button id="settings-trigger" class="settings-trigger">Settings</button>
+    <!-- Line icons in the spirit of SF Symbols, drawn with currentColor -->
+    <svg class="icon-sprite" aria-hidden="true" focusable="false">
+        <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+        <symbol id="i-newtab" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 9.5h18"/></symbol>
+        <symbol id="i-incognito" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="3"/><circle cx="16.5" cy="15.5" r="3"/><path d="M10.5 15.5h3M3 11h18M6 11l2-6h8l2 6"/></symbol>
+        <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
+        <symbol id="i-pencil" viewBox="0 0 24 24"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></symbol>
+        <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l1 13h9l1-13M10 11v5.5M14 11v5.5"/></symbol>
+        <symbol id="i-tabs" viewBox="0 0 24 24"><rect x="3" y="7" width="14" height="12" rx="2.5"/><path d="M7 7V6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-2"/></symbol>
+        <symbol id="i-ungroup" viewBox="0 0 24 24"><rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="2"/></symbol>
+    </svg>
 
-    <div id="workspaces-container">
+    <button id="settings-trigger" class="settings-trigger glass" aria-label="Settings" title="Settings">
+        <svg class="sym"><use href="#i-gear"/></svg>
+    </button>
+
+    <div id="workspaces-container" class="glass">
         <ul id="workspaces-tabs">
             <!-- Tabs will be dynamically inserted here -->
         </ul>
     </div>
 
     <div class="container" id="dial-grid">
-        <div class="dial add-btn" id="add-btn" data-key="add">
-            <span class="plus">+</span>
+        <div class="dial add-btn" id="add-btn" data-key="add" role="button" tabindex="0" aria-label="Add website" title="Add website">
+            <div class="icon"><svg class="sym"><use href="#i-plus"/></svg></div>
+            <span aria-hidden="true">&nbsp;</span>
         </div>
     </div>
 
     <div id="modal" class="modal">
-        <div class="modal-content">
-            <h2 id="modal-title">Add New Website</h2>
-            <input type="text" id="site-url" placeholder="URL (e.g., https://kick.com)">
-            <input type="text" id="site-name" placeholder="Name (Auto-generated)">
-            <input type="text" id="site-img" placeholder="Image URL (Optional)">
+        <div class="modal-content sheet add-sheet" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+            <h2 id="modal-title">Add Website</h2>
+            <div class="group">
+                <label class="field"><span>URL</span><input type="text" id="site-url" placeholder="example.com" spellcheck="false" autocomplete="off"></label>
+                <label class="field"><span>Name</span><input type="text" id="site-name" placeholder="Filled in from the URL" autocomplete="off"></label>
+                <label class="field"><span>Icon URL</span><input type="text" id="site-img" placeholder="Optional" spellcheck="false" autocomplete="off"></label>
+            </div>
             <div class="modal-buttons">
-                <button id="cancel-btn">Cancel</button>
-                <button id="save-btn">Save</button>
+                <button id="cancel-btn" class="btn">Cancel</button>
+                <button id="save-btn" class="btn btn-primary">Save</button>
             </div>
         </div>
     </div>
 
     <div id="settings-modal" class="modal">
-        <div class="modal-content settings-content">
-            <h2>Settings</h2>
-            <div class="tabs">
-                <div class="tab active" data-target="tab-layout">Layout</div>
-                <div class="tab" data-target="tab-bg">Background</div>
-                <div class="tab" data-target="tab-theme">Theme</div>
-                <div class="tab" data-target="tab-data">Data</div>
+        <div class="modal-content sheet settings-content" role="dialog" aria-modal="true" aria-labelledby="settings-title">
+            <h2 id="settings-title">Settings</h2>
+            <div class="tabs segmented" role="tablist">
+                <button class="tab active" role="tab" data-target="tab-layout">Layout</button>
+                <button class="tab" role="tab" data-target="tab-bg">Wallpaper</button>
+                <button class="tab" role="tab" data-target="tab-theme">Appearance</button>
+                <button class="tab" role="tab" data-target="tab-data">Data</button>
             </div>
 
             <div id="tab-layout" class="tab-pane active">
-                <div class="setting-row">
-                    <label>Columns: <span id="col-val">6</span></label>
-                    <input type="range" id="col-range" min="3" max="12" value="6">
+                <div class="group">
+                    <div class="row">
+                        <label class="row-label" for="col-range">Columns</label>
+                        <div class="row-control"><input type="range" id="col-range" min="3" max="12" value="6"><span class="value" id="col-val">6</span></div>
+                    </div>
+                    <div class="row">
+                        <label class="row-label" for="size-range">Icon size</label>
+                        <div class="row-control"><input type="range" id="size-range" min="80" max="300" value="160"><span class="value" id="size-val">100%</span></div>
+                    </div>
+                    <div class="row">
+                        <label class="row-label" for="h-gap-range">Horizontal spacing</label>
+                        <div class="row-control"><input type="range" id="h-gap-range" min="0" max="100" value="20"><span class="value" id="h-gap-val">20px</span></div>
+                    </div>
+                    <div class="row">
+                        <label class="row-label" for="v-gap-range">Vertical spacing</label>
+                        <div class="row-control"><input type="range" id="v-gap-range" min="0" max="100" value="20"><span class="value" id="v-gap-val">20px</span></div>
+                    </div>
                 </div>
-                <div class="setting-row">
-                    <label>Dial Size: <span id="size-val">100%</span></label>
-                    <input type="range" id="size-range" min="80" max="300" value="160">
-                </div>
-                <div class="setting-row">
-                    <label>Horizontal Spacing: <span id="h-gap-val">20px</span></label>
-                    <input type="range" id="h-gap-range" min="0" max="100" value="20">
-                </div>
-                <div class="setting-row">
-                    <label>Vertical Spacing: <span id="v-gap-val">20px</span></label>
-                    <input type="range" id="v-gap-range" min="0" max="100" value="20">
-                </div>
-                <div class="setting-row">
-                    <label>Auto-fit to window
-                        <div class="sub-label">Shrink and reflow dials so they all fit when the window is small.</div>
-                    </label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="autofit-toggle">
-                        <span class="slider"></span>
-                    </label>
+                <div class="group">
+                    <div class="row">
+                        <label class="row-label" for="autofit-toggle">Auto-fit to window
+                            <span class="sub-label">Shrink and reflow icons so they all fit when the window is small.</span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="autofit-toggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
                 </div>
             </div>
 
             <div id="tab-bg" class="tab-pane">
                 <div class="bg-grid" id="bg-grid"></div>
-                <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
-                    <label style="font-weight:bold; display:block; margin-bottom:10px;">Upload Custom Background</label>
-                    <input type="file" id="bg-upload" accept="image/jpeg, image/png, image/webp">
+                <div class="group">
+                    <div class="row">
+                        <span class="row-label">Your own picture
+                            <span class="sub-label">JPEG, PNG or WebP. Smaller files keep new tabs fast.</span>
+                        </span>
+                        <label class="btn" for="bg-upload">Choose Picture…</label>
+                        <input type="file" id="bg-upload" class="visually-hidden" accept="image/jpeg, image/png, image/webp">
+                    </div>
                 </div>
             </div>
 
             <div id="tab-theme" class="tab-pane">
-                <div class="setting-row">
-                    <h3>Mode</h3>
-                    <div id="theme-options">
-                        <label><input type="radio" name="theme" value="light" checked> Light Mode</label>
-                        <label><input type="radio" name="theme" value="dark"> Dark Mode</label>
+                <div class="group">
+                    <div class="row">
+                        <span class="row-label">Appearance</span>
+                        <div id="theme-options" class="segmented small" role="radiogroup" aria-label="Appearance">
+                            <label><input type="radio" name="theme" value="auto" checked><span>Automatic</span></label>
+                            <label><input type="radio" name="theme" value="light"><span>Light</span></label>
+                            <label><input type="radio" name="theme" value="dark"><span>Dark</span></label>
+                        </div>
                     </div>
                 </div>
             </div>
 
             <div id="tab-data" class="tab-pane">
-                <div class="setting-row">
-                    <label>Cache Icons
-                        <div class="sub-label">Saves icons locally for faster loading and offline access. May use more
-                            storage.</div>
-                        <div class="sub-label" id="icon-cache-status"></div>
-                    </label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="cache-icons-toggle">
-                        <span class="slider"></span>
-                    </label>
+                <div class="group">
+                    <div class="row">
+                        <label class="row-label" for="cache-icons-toggle">Save icons for offline use
+                            <span class="sub-label">Keeps a copy of every icon so they show without a connection.</span>
+                            <span class="sub-label" id="icon-cache-status"></span>
+                        </label>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="cache-icons-toggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
                 </div>
-                <div class="setting-row">
-                    <h3>Backup & Restore</h3>
-                    <div style="display: flex; gap: 10px;">
-                        <button id="export-btn" style="background:#4CAF50; color:white;">Export Config</button>
-                        <button id="import-trigger" style="background:#FF9800; color:white;">Import Config</button>
-                        <input type="file" id="import-file" style="display:none" accept=".json">
+                <div class="group">
+                    <div class="row">
+                        <span class="row-label">Backup
+                            <span class="sub-label">Move your links and settings to another computer.</span>
+                        </span>
+                        <div class="row-buttons">
+                            <button id="export-btn" class="btn">Export…</button>
+                            <button id="import-trigger" class="btn">Import…</button>
+                        </div>
+                        <input type="file" id="import-file" class="visually-hidden" accept=".json">
                     </div>
                 </div>
             </div>
 
-            <div class="modal-buttons" style="margin-top: 20px;">
-                <button id="close-settings">Close</button>
+            <div class="modal-buttons">
+                <button id="close-settings" class="btn btn-primary">Done</button>
             </div>
         </div>
     </div>
 
-    <div id="context-menu" class="context-menu">
-        <div class="context-menu-item" id="ctx-newtab">Open in New Tab</div>
-        <div class="context-menu-item" id="ctx-incognito">Open in Incognito</div>
-        <div class="context-menu-item" id="ctx-copy">Copy Link</div>
-        <div class="context-menu-item" id="ctx-edit">Edit</div>
-        <div class="context-menu-item delete" id="ctx-delete">Delete</div>
+    <div id="context-menu" class="context-menu" role="menu">
+        <div class="context-menu-item" role="menuitem" id="ctx-newtab"><svg class="sym"><use href="#i-newtab"/></svg>Open in New Tab</div>
+        <div class="context-menu-item" role="menuitem" id="ctx-incognito"><svg class="sym"><use href="#i-incognito"/></svg>Open in Incognito</div>
+        <div class="context-menu-item" role="menuitem" id="ctx-copy"><svg class="sym"><use href="#i-link"/></svg>Copy Link</div>
+        <div class="menu-separator" role="separator"></div>
+        <div class="context-menu-item" role="menuitem" id="ctx-edit"><svg class="sym"><use href="#i-pencil"/></svg>Edit…</div>
+        <div class="context-menu-item delete" role="menuitem" id="ctx-delete"><svg class="sym"><use href="#i-trash"/></svg>Delete</div>
     </div>
 
-    <div id="folder-context-menu" class="context-menu">
-        <div class="context-menu-item" id="ctx-folder-rename">Rename</div>
-        <div class="context-menu-item" id="ctx-folder-openall">Open All in New Tabs</div>
-        <div class="context-menu-item" id="ctx-folder-ungroup">Ungroup</div>
-        <div class="context-menu-item delete" id="ctx-folder-delete">Delete</div>
+    <div id="folder-context-menu" class="context-menu" role="menu">
+        <div class="context-menu-item" role="menuitem" id="ctx-folder-openall"><svg class="sym"><use href="#i-tabs"/></svg>Open All in New Tabs</div>
+        <div class="context-menu-item" role="menuitem" id="ctx-folder-rename"><svg class="sym"><use href="#i-pencil"/></svg>Rename</div>
+        <div class="context-menu-item" role="menuitem" id="ctx-folder-ungroup"><svg class="sym"><use href="#i-ungroup"/></svg>Ungroup</div>
+        <div class="menu-separator" role="separator"></div>
+        <div class="context-menu-item delete" role="menuitem" id="ctx-folder-delete"><svg class="sym"><use href="#i-trash"/></svg>Delete</div>
     </div>
 
     <div id="folder-layer" class="folder-layer" hidden>
@@ -147,9 +187,10 @@
         </div>
     </div>
 
-    <div id="workspace-context-menu" class="context-menu">
-        <div class="context-menu-item" id="ctx-edit-workspace">Edit Name</div>
-        <div class="context-menu-item delete" id="ctx-delete-workspace">Delete</div>
+    <div id="workspace-context-menu" class="context-menu" role="menu">
+        <div class="context-menu-item" role="menuitem" id="ctx-edit-workspace"><svg class="sym"><use href="#i-pencil"/></svg>Rename</div>
+        <div class="menu-separator" role="separator"></div>
+        <div class="context-menu-item delete" role="menuitem" id="ctx-delete-workspace"><svg class="sym"><use href="#i-trash"/></svg>Delete</div>
     </div>
 
     <div id="toast" class="toast" role="status" aria-live="polite"></div>
