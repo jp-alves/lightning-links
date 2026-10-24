@@ -11,6 +11,15 @@
         ],
         "createdAt": "2026-10-24T08:13:10.784Z",
         "reason": "Claude: throwaway brainstorm wireframe, not shipped UI"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          ".superpowers/brainstorm/63433-1792836281/content/apple-directions.html"
+        ],
+        "createdAt": "2026-10-24T10:05:52.536Z",
+        "reason": "Claude: throwaway brainstorm mockup; white labels sit on a photo the detector can't see"
       }
     ]
   }
