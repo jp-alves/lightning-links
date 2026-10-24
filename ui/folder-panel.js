@@ -23,8 +23,9 @@
         };
         els.backdrop.addEventListener('click', () => close());
         document.addEventListener('keydown', (e) => {
-            // Esc during a drag cancels the drag only
-            if (e.key === 'Escape' && state && !els.grid.classList.contains('drag-active')) close();
+            // Esc during a drag cancels the drag only; with a dialog open on top, it's not ours
+            const dialogOpen = [...document.querySelectorAll('.modal')].some(m => m.style.display === 'flex');
+            if (e.key === 'Escape' && state && !dialogOpen && !els.grid.classList.contains('drag-active')) close();
         });
         els.name.addEventListener('keydown', (e) => {
             if (e.key === 'Enter') els.name.blur();

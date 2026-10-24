@@ -100,6 +100,7 @@
     let contextTarget = null;
     let contextFolderIndex = -1;
     let openFolderId = null;
+    let addFolderId = null; // folder the add modal was opened from, if any
 
     let contextWorkspaceName = null;
 
@@ -837,6 +838,13 @@
 
         DOM.saveBtn.onclick = handleSave;
 
+        // Any press outside a menu closes it (clicks swallowed after a drag never reach 'click')
+        document.addEventListener('pointerdown', (e) => {
+            [DOM.contextMenu, DOM.workspaceContextMenu, DOM.folderContextMenu].forEach(menu => {
+                if (!menu.contains(e.target)) menu.style.display = 'none';
+            });
+        });
+
         // Context menu - hide on outside click
 
         document.addEventListener('click', (e) => {
@@ -1266,6 +1274,7 @@
 
     function openAddModal() {
         editingTarget = null;
+        addFolderId = openFolderId;
         DOM.modalTitle.textContent = "Add New Website";
         clearInputs();
         DOM.addModal.style.display = 'flex';
@@ -1310,7 +1319,7 @@
         }
 
         const dialData = { name, url, img };
-        const open = getOpenFolder();
+        const open = addFolderId && getActiveDials().find(item => LL.model.isFolder(item) && item.id === addFolderId);
         if (editingTarget) {
             const [list, i] = targetList(editingTarget);
             list[i] = dialData;
@@ -1318,10 +1327,10 @@
             renderDials();
         } else if (open) {
             // "+" inside an open folder adds into that folder
-            open.folder.items.push(dialData);
+            open.items.push(dialData);
             saveWorkspaces();
             LL.flip.flip(LL.folderPanel.gridEl(), '.dial', renderDials);
-            const added = LL.folderPanel.gridEl().querySelector(`.dial[data-index="${open.folder.items.length - 1}"]`);
+            const added = LL.folderPanel.gridEl().querySelector(`.dial[data-index="${open.items.length - 1}"]`);
             if (added) added.classList.add('entering');
         } else {
             const activeDials = getActiveDials();
