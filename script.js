@@ -112,7 +112,11 @@
 
     let lastActiveWorkspace = 'Home';
 
-    let settings = JSON.parse(localStorage.getItem('mySettings')) || {
+    const BOOT = window.__LL_BOOT || {};
+
+    let customBg = BOOT.bgImage || null;
+
+    let settings = BOOT.settings || {
 
         colCount: 6,
 
@@ -211,6 +215,8 @@
         applySettings();
 
         renderDials();
+
+        performance.mark('ll-dials');
 
         renderBackgroundOptions();
 
@@ -389,7 +395,7 @@
 
         applyLayoutVars();
 
-        root.style.setProperty('--bg-image', `url('${settings.bgImage}')`);
+        root.style.setProperty('--bg-image', `url('${bgUrl()}')`);
 
         DOM.colVal.textContent = DOM.colRange.value = settings.colCount;
 
@@ -447,6 +453,10 @@
         style.setProperty('--row-gap', rowGap + 'px');
     }
 
+    function bgUrl() {
+        return settings.bgImage === 'custom' ? customBg : settings.bgImage;
+    }
+
     function persistSettings() {
         localStorage.setItem('mySettings', JSON.stringify(settings));
     }
@@ -487,7 +497,7 @@
 
             div.innerHTML = `
 
-                        <img src="${LL.iconcache.resolveIcon(iconCache, dial.img)}" loading="lazy" onerror="this.src='icons/icon128.png'" alt="${dial.name}">
+                        <img src="${LL.iconcache.resolveIcon(iconCache, dial.img)}" decoding="async" onerror="this.src='icons/icon128.png'" alt="${dial.name}">
 
                         <span>${dial.name}</span>
 
@@ -537,9 +547,8 @@
 
         backgrounds.forEach(bg => createBgThumb(bg));
 
-        if (settings.bgImage && settings.bgImage.startsWith('data:image')) {
-
-            createBgThumb(settings.bgImage, true);
+        if (customBg) {
+            createBgThumb(customBg, true);
 
         }
 
@@ -557,11 +566,10 @@
 
         img.className = 'bg-option';
 
-        if (src === settings.bgImage) img.classList.add('selected');
-
+        const value = isCustom ? 'custom' : src;
+        if (value === settings.bgImage) img.classList.add('selected');
         img.onclick = () => {
-
-            settings.bgImage = src;
+            settings.bgImage = value;
 
             saveSettings();
 
@@ -588,7 +596,8 @@
                 e.stopPropagation();
 
                 if (confirm('Remove this custom background?')) {
-
+                    localStorage.removeItem('bgImage');
+                    customBg = null;
                     settings.bgImage = 'backgrounds/bg1.jpg';
 
                     saveSettings();
@@ -1115,7 +1124,7 @@
 
     function handleExport() {
 
-        const data = { workspaces, lastActiveWorkspace, settings, iconCache };
+        const data = { workspaces, lastActiveWorkspace, settings, iconCache, bgImage: customBg };
 
         const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
 
@@ -1156,6 +1165,20 @@
                 else workspaces['Home'] = imported.workspaces.Home; // v1.0 single-list backup goes into Home
                 lastActiveWorkspace = imported.lastActiveWorkspace;
                 settings = imported.settings;
+                // v1.0 backups carry the custom background inside settings
+                const importedBg = imported.bgImage ||
+                    (settings.bgImage && settings.bgImage.startsWith('data:') ? settings.bgImage : null);
+                if (importedBg) {
+                    try {
+                        localStorage.setItem('bgImage', importedBg);
+                        customBg = importedBg;
+                        settings.bgImage = 'custom';
+                    } catch (err) {
+                        settings.bgImage = 'backgrounds/bg1.jpg';
+                    }
+                } else if (settings.bgImage === 'custom' && !customBg) {
+                    settings.bgImage = 'backgrounds/bg1.jpg';
+                }
                 if (imported.iconCache) {
                     iconCache = imported.iconCache;
                     LL.iconcache.saveCache(localStorage, iconCache);
@@ -1232,7 +1255,14 @@
 
                 const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
 
-                settings.bgImage = optimizedDataUrl;
+                try {
+                    localStorage.setItem('bgImage', optimizedDataUrl);
+                } catch (err) {
+                    alert("Storage full — image too large");
+                    return;
+                }
+                customBg = optimizedDataUrl;
+                settings.bgImage = 'custom';
 
                 saveSettings();
 

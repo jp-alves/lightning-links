@@ -2,75 +2,54 @@
 (function () {
     'use strict';
 
+    const root = document.documentElement;
     let bgImageURL = 'backgrounds/bg1.jpg'; // Default
     let settings = null;
+    let customBg = null;
 
     try {
         const saved = localStorage.getItem('mySettings');
         settings = saved ? JSON.parse(saved) : null;
+        customBg = localStorage.getItem('bgImage');
+
+        // One-time move: custom backgrounds used to live inside mySettings, making it heavy to parse
+        if (settings && settings.bgImage && settings.bgImage.startsWith('data:')) {
+            customBg = settings.bgImage;
+            settings.bgImage = 'custom';
+            localStorage.setItem('bgImage', customBg);
+            localStorage.setItem('mySettings', JSON.stringify(settings));
+        }
 
         // 1. Determine the correct background immediately
         if (settings && settings.bgImage) {
-            bgImageURL = settings.bgImage;
+            bgImageURL = settings.bgImage === 'custom' ? (customBg || bgImageURL) : settings.bgImage;
         }
 
         // 2. Apply CSS Variable immediately (Instant visual update)
-        document.documentElement.style.setProperty('--bg-image', `url('${bgImageURL}')`);
+        root.style.setProperty('--bg-image', `url('${bgImageURL}')`);
 
         // 3. Apply Layout Settings
         if (settings) {
-            if (settings.colCount) document.documentElement.style.setProperty('--col-count', settings.colCount);
-            if (settings.dialSize) document.documentElement.style.setProperty('--dial-width', settings.dialSize + 'px');
-            if (settings.colGap) document.documentElement.style.setProperty('--col-gap', settings.colGap + 'px');
-            if (settings.rowGap) document.documentElement.style.setProperty('--row-gap', settings.rowGap + 'px');
+            if (settings.colCount) root.style.setProperty('--col-count', settings.colCount);
+            if (settings.dialSize) root.style.setProperty('--dial-width', settings.dialSize + 'px');
+            if (settings.colGap) root.style.setProperty('--col-gap', settings.colGap + 'px');
+            if (settings.rowGap) root.style.setProperty('--row-gap', settings.rowGap + 'px');
         }
 
     } catch (e) {
         console.error("Settings load error:", e);
     }
 
-    // 4. SMART REVEAL: Wait for BOTH DOM readiness AND Image Loading
-    // This ensures no white flash if the image is heavy
+    // Parsed once here; script.js reuses it instead of parsing again
+    window.__LL_BOOT = { settings, bgImage: customBg };
 
-    let domReady = false;
-    let imgReady = false;
-
-    // A. Check DOM
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            domReady = true;
-            checkReveal();
-        });
-    } else {
-        domReady = true;
-    }
-
-    // B. Preload the specific image
+    // 4. Dials show as soon as the DOM is ready (no waiting on the image).
+    // The background layer appears once decoded: instantly if that happens before
+    // first paint, otherwise with a short fade over the dark fallback colour.
     const imgLoader = new Image();
-    imgLoader.onload = () => {
-        imgReady = true;
-        checkReveal();
-    };
-    imgLoader.onerror = () => {
-        // If image fails, reveal anyway so user isn't stuck on black screen
-        imgReady = true;
-        checkReveal();
+    imgLoader.onload = imgLoader.onerror = () => {
+        root.classList.add('bg-ready');
+        performance.mark('ll-bg');
     };
     imgLoader.src = bgImageURL;
-
-    // Fallback: If image takes too long (e.g. 1 sec), reveal anyway
-    setTimeout(() => {
-        if (!imgReady) {
-            imgReady = true;
-            checkReveal();
-        }
-    }, 500);
-
-    function checkReveal() {
-        if (domReady && imgReady) {
-            requestAnimationFrame(() => {
-                document.body.classList.add('ready');
-            });
-        }
-    }
 })();

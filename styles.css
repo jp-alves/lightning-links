@@ -7,17 +7,10 @@
     --bg-image: url('backgrounds/bg1.jpg');
 }
 
-/* CRITICAL: Hide body until ready */
 body {
     margin: 0;
     padding: 0;
     font-family: 'Segoe UI', sans-serif;
-
-    /* Variable is set by init.js before paint */
-    background-image: var(--bg-image);
-    background-size: cover;
-    background-position: center;
-    background-attachment: fixed;
     height: 100vh;
     display: flex;
     align-items: center;
@@ -28,14 +21,20 @@ body {
 
     /* Prevent scrollbars during load */
     overflow: hidden;
-
-    /* SMOOTH REVEAL: Start invisible, fade in when ready */
-    opacity: 0;
-    transition: opacity 0.2s ease-out;
-    /* Slightly smoother transition */
 }
 
-body.ready {
+/* Background layer: set by init.js before paint, shown once the image has decoded */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: var(--bg-image) center / cover no-repeat;
+    opacity: 0;
+    transition: opacity 0.2s ease-out;
+}
+
+.bg-ready body::before {
     opacity: 1;
 }
 
