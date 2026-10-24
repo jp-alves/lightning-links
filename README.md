@@ -1,70 +1,80 @@
-# ⚡ Lightning Links
+# Lightning Links
 
-A handcrafted, privacy-focused New Tab page built for simplicity and speed.
+A new tab page for Chrome and Edge that shows your favourite sites as a grid of icons, and nothing else.
 
-I created Lightning Links because I wanted a dashboard that felt like a tool, not a product. It is a lightweight alternative to complex new tab extensions, designed to do one thing well: get you to your favorite websites instantly.
+I used **Speed Dial 2** for years. Over time it picked up an AI assistant, clocks, notes and a "focus mode" that moved the dials around and broke my muscle memory. Changing the background became a paid feature. I wanted the old version back, so I wrote my own.
 
-## 📖 Why this exists
+Lightning Links has no account, no subscription, no analytics and no AI. Your links stay where you put them.
 
-For a long time, I was a fan of **Speed Dial 2**. It was great, until it wasn't.
+## What it does
 
-Over time, it started adding features that felt unnecessary for a simple new tab page, for example, things like AI integration (Voila), clocks, notes, and a "focus mode" that actually disrupted muscle memory by shifting the position of the dials. The tool started to feel bloated, and the features began to get in the way of the main idea: speed.
+- **Dials.** Each site is an app-style icon with its name underneath. Drag one to move it; the others slide aside to show where it will land.
+- **Folders.** Hold a dial over another one to put them in a folder, like on a phone. Click the folder to open it.
+- **Workspaces.** Up to five tabs at the top (Home, Work, Study…) with their own set of dials. Drag the tabs to reorder them; right-click to rename or delete.
+- **Right-click menu.** Open a site in a new tab or in Incognito, copy its link, edit or delete it. Folders can open all their links at once.
+- **Layout.** Columns, icon size, horizontal and vertical spacing (negative values pull icons together) and name size.
+- **Auto-fit.** In a small or half-screen window, the dials shrink, and drop a column only if they have to, so you never need to scroll. You can turn this off.
+- **Wallpapers.** Five photos are included, or upload your own.
+- **Light and Dark.** Follows your system by default, or pick one.
+- **Offline icons.** With *Save icons for offline use* on, each icon is stored locally, so the page looks right without a connection.
+- **Backup.** Export everything (links, folders, workspaces, layout, wallpaper and saved icons) to a single JSON file, and import it on another computer.
 
-I also believe that basic customization shouldn't be locked behind a paywall. Changing your background image is a fundamental part of making a browser your own, and it shouldn't be a "Pro" feature.
+## Install
 
-Lightning Links is my attempt to return to basics. No AI, no subscriptions, no shifting layouts, just your links, exactly where you left them.
+To install from the source:
 
-## 🚀 Features
+1. Download or clone this repository.
+2. Go to `chrome://extensions` (or `edge://extensions`).
+3. Turn on **Developer mode**.
+4. Click **Load unpacked** and pick the project folder.
+5. Open a new tab.
 
-* **Instant Load:** Optimized to render the moment you open a tab.
-* **Feels at Home on a Mac:** App-icon style dials, glass controls, macOS-style menus and settings, and Light/Dark appearance that follows your system.
-* **Smart Preload:** Uses CSS variables to paint the layout immediately, preventing the "white flash" on startup.
-* **Drag & Drop:** Intuitively reorder your shortcuts to match your workflow. The other dials slide aside to show where yours will land.
-* **Folders:** Hold a dial over another one to group them into a folder, just like on a phone. Click the folder to zoom in and pick a site.
-* **Right-Click Shortcuts:** Open any dial in an Incognito window, or copy its link.
-* **Auto-Fit:** When the window is half-screen or smaller, dials shrink (and reflow only if needed) so they all stay visible. You can turn it off in Settings.
-* **Fully Customizable:**
-    * Adjust column count, dial size, and spacing.
-    * Upload custom backgrounds or choose from the included presets.
-* **Privacy First:** **No data leaves your device.** All shortcuts and settings are saved in your browser's `localStorage`.
-* **Works Offline:** With "Cache Icons" on, every icon is saved locally, so your dials look right even without a connection.
-* **Import/Export:** Easily backup your configuration or move it to another computer.
-* **Zero Bloat:** No AI assistants, no analytics, and no unnecessary tracking.
+To update, pull the latest code and click the reload button on the extension's card.
 
-## 🏞️ Credits & Tips
+## Privacy
 
-### Background Images
-The beautiful landscape backgrounds included in this extension are from the **National Park Service**. They were sourced from the "Find Your Park" album on Flickr.
-* If you want to view the original high-resolution images, please check them out here: [**National Park Service - Find Your Park**](https://flic.kr/s/aHsmB3hfLR).
+Everything is stored in your browser's `localStorage`. Nothing is sent anywhere, and there is no server.
 
-### Font
-The interface uses **[Inter](https://rsms.me/inter/)** by Rasmus Andersson, bundled in `fonts/` so it works offline. Inter is licensed under the SIL Open Font License 1.1 (see `fonts/OFL.txt`).
+What the permissions are for:
 
-### Custom Backgrounds
-You can upload any image you want as a background. However, to keep the extension feeling "lightning" fast, file size matters.
-* **Pro Tip:** If you are using your own image, I recommend running it through **[TinyPNG](https://tinypng.com/)** (or a similar compressor) before uploading. It significantly reduces file size without losing quality, ensuring your new tab loads instantly.
+- `storage`: saving your links and settings.
+- `google.com` and `gstatic.com`: site icons come from Google's favicon service when you don't set one yourself.
+- *All sites* (optional): asked for only when you turn on offline icons, so icons hosted on other sites can be saved too. If you decline, Google-hosted icons are still saved.
 
-## 🛠 Installation (Developer Mode)
+## Tips
 
-Since this is a personal project, you can install it directly from the source:
+- **Keep your wallpaper small.** Uploaded pictures are scaled down to about screen size and compressed, but a lighter file still loads faster. [TinyPNG](https://tinypng.com/) works well.
+- **Custom icons.** Paste any image URL into *Icon URL* when adding a site. The icon cell is square, so square images look best.
+- **Storage.** Browsers give each extension about 5 MB of `localStorage`. If it fills up, offline icons are dropped first so your links are always kept.
 
-1.  Download or clone this repository.
-2.  Open Chrome/Edge and navigate to `chrome://extensions`.
-3.  Toggle **Developer mode** (top right corner).
-4.  Click **Load unpacked**.
-5.  Select the folder containing these files.
-6.  Open a new tab and enjoy!
+## Development
 
-## 📦 Tech Stack
+Plain HTML, CSS and JavaScript. There are no dependencies and no build step: edit a file, then reload the new tab.
 
-* **HTML5 & CSS3** (Grid & Flexbox)
-* **Vanilla JavaScript** (ES6+)
-* **Zero Dependencies** (No frameworks, just code)
+```
+newtab.html     page markup
+init.js         runs before first paint: applies wallpaper, theme and layout from storage
+script.js       the rest of the page
+lib/            logic with no DOM access (layout maths, data model, icon cache, storage)
+ui/             drag and drop, folder panel
+tests/          unit tests for lib/
+```
 
-## 🤝 Community
+Run the tests with Node 18 or newer:
 
-This is a handcrafted solution, and I'm always open to feedback. If you find a bug or have an idea that fits the "minimalist" philosophy, feel free to open an issue or contribute code.
+```
+node --test tests/*.test.js
+```
 
-## 📄 License
+## Credits
 
-MIT License
+- Wallpapers: **National Park Service**, from their [Find Your Park](https://flic.kr/s/aHsmB3hfLR) album on Flickr.
+- Font: **[Inter](https://rsms.me/inter/)** by Rasmus Andersson, included in `fonts/` under the SIL Open Font License 1.1 (`fonts/OFL.txt`).
+
+## Contributing
+
+Bug reports and ideas are welcome. Please open an issue. The project aims to stay small, so new features need to fit a page you look at for half a second before clicking somewhere else.
+
+## License
+
+[MIT](LICENSE.txt)
