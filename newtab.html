@@ -18,7 +18,6 @@
     <svg class="icon-sprite" aria-hidden="true" focusable="false">
         <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
         <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
-        <symbol id="i-close" viewBox="0 0 24 24"><path d="M7 7l10 10M17 7L7 17"/></symbol>
         <symbol id="i-newtab" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M3 9.5h18"/></symbol>
         <symbol id="i-incognito" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="3"/><circle cx="16.5" cy="15.5" r="3"/><path d="M10.5 15.5h3M3 11h18M6 11l2-6h8l2 6"/></symbol>
         <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></symbol>
@@ -48,7 +47,6 @@
     <div id="modal" class="modal">
         <div class="modal-content sheet add-sheet" role="dialog" aria-modal="true" aria-labelledby="modal-title">
             <h2 id="modal-title">Add Website</h2>
-            <button type="button" class="sheet-close" aria-label="Close" title="Close"><svg class="sym"><use href="#i-close"/></svg></button>
             <div class="group">
                 <label class="field"><span>URL</span><input type="text" id="site-url" placeholder="example.com" spellcheck="false" autocomplete="off"></label>
                 <label class="field"><span>Name</span><input type="text" id="site-name" placeholder="Filled in from the URL" autocomplete="off"></label>
@@ -65,7 +63,6 @@
     <div id="workspace-modal" class="modal">
         <form class="modal-content sheet workspace-sheet" id="workspace-form" role="dialog" aria-modal="true" aria-labelledby="workspace-title" novalidate>
             <h2 id="workspace-title">New Workspace</h2>
-            <button type="button" class="sheet-close" aria-label="Close" title="Close"><svg class="sym"><use href="#i-close"/></svg></button>
             <div class="group">
                 <label class="field"><span>Name</span><input type="text" id="workspace-name" maxlength="24" autocomplete="off" placeholder="Work, Study, Home…" aria-describedby="workspace-error"></label>
             </div>
@@ -80,7 +77,6 @@
     <div id="confirm-modal" class="modal">
         <div class="modal-content sheet confirm-sheet" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" aria-describedby="confirm-message">
             <h2 id="confirm-title"></h2>
-            <button type="button" class="sheet-close" aria-label="Close" title="Close"><svg class="sym"><use href="#i-close"/></svg></button>
             <p id="confirm-message" class="confirm-message"></p>
             <div class="modal-buttons">
                 <button type="button" id="confirm-cancel" class="btn">Cancel</button>
@@ -92,7 +88,6 @@
     <div id="settings-modal" class="modal">
         <div class="modal-content sheet settings-content" role="dialog" aria-modal="true" aria-labelledby="settings-title">
             <h2 id="settings-title">Settings</h2>
-            <button type="button" class="sheet-close" aria-label="Close" title="Close"><svg class="sym"><use href="#i-close"/></svg></button>
             <div class="tabs segmented" role="tablist">
                 <button class="tab active" role="tab" data-target="tab-layout">Layout</button>
                 <button class="tab" role="tab" data-target="tab-bg">Wallpaper</button>

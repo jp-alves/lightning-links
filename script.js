@@ -1189,15 +1189,6 @@
             if (e.target === DOM.confirmModal) closeConfirm(false);
         };
 
-        // The red × in each sheet's corner closes it, like Cancel
-        document.querySelectorAll('.sheet-close').forEach(btn => btn.onclick = () => {
-            const modal = btn.closest('.modal');
-            if (modal === DOM.confirmModal) closeConfirm(false);
-            else if (modal === DOM.workspaceModal) closeWorkspaceSheet();
-            else if (modal === DOM.addModal) DOM.cancelBtn.click();
-            else modal.style.display = 'none';
-        });
-
         // Esc closes whichever sheet is open, like Cancel
         document.addEventListener('keydown', (e) => {
             if (e.key !== 'Escape') return;
