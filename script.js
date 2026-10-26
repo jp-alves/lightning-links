@@ -83,6 +83,7 @@
         bgUpload: null,
 
         themeOptions: null,
+        labelColorOptions: null,
 
         cacheIconsToggle: null,
         labelRange: null,
@@ -162,6 +163,7 @@
 
         theme: 'auto',
         labelScale: 100,
+        labelColor: 'light',
 
         cacheIcons: false,
         autoFit: true
@@ -401,6 +403,7 @@
 
         DOM.workspacesTabs = document.getElementById('workspaces-tabs');
         DOM.themeOptions = document.getElementById('theme-options');
+        DOM.labelColorOptions = document.getElementById('label-color-options');
         DOM.cacheIconsToggle = document.getElementById('cache-icons-toggle');
         DOM.labelRange = document.getElementById('label-range');
         DOM.labelVal = document.getElementById('label-val');
@@ -496,6 +499,10 @@
         applyTheme();
         const themeInput = DOM.themeOptions.querySelector(`input[value="${settings.theme || 'auto'}"]`);
         if (themeInput) themeInput.checked = true;
+
+        // Name color: light (white) or dark names under the icons
+        root.dataset.labelColor = settings.labelColor === 'dark' ? 'dark' : 'light';
+        DOM.labelColorOptions.querySelector(`input[value="${root.dataset.labelColor}"]`).checked = true;
 
         // Filled part of each slider track
         [DOM.colRange, DOM.sizeRange, DOM.hGapRange, DOM.vGapRange, DOM.labelRange].forEach(input => {
@@ -1078,6 +1085,11 @@
 
         darkQuery.addEventListener('change', applyTheme);
 
+        DOM.labelColorOptions.onchange = (e) => {
+            settings.labelColor = e.target.value;
+            saveSettings();
+        };
+
         // Workspace tabs and the + icon are not native buttons: Enter / Space activate them
         const activateOnKey = (e) => {
             if (e.key !== 'Enter' && e.key !== ' ') return;
@@ -1176,6 +1188,15 @@
             if (e.target === DOM.workspaceModal) closeWorkspaceSheet();
             if (e.target === DOM.confirmModal) closeConfirm(false);
         };
+
+        // The red × in each sheet's corner closes it, like Cancel
+        document.querySelectorAll('.sheet-close').forEach(btn => btn.onclick = () => {
+            const modal = btn.closest('.modal');
+            if (modal === DOM.confirmModal) closeConfirm(false);
+            else if (modal === DOM.workspaceModal) closeWorkspaceSheet();
+            else if (modal === DOM.addModal) DOM.cancelBtn.click();
+            else modal.style.display = 'none';
+        });
 
         // Esc closes whichever sheet is open, like Cancel
         document.addEventListener('keydown', (e) => {
