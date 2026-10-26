@@ -39,6 +39,10 @@
         // 2. Apply CSS Variable immediately (Instant visual update)
         root.style.setProperty('--bg-image', `url('${bgImageURL}')`);
 
+        // Until the picture is ready, show its average colour (saved last time) instead of black
+        const bgColor = localStorage.getItem('bgColor');
+        if (bgColor) root.style.setProperty('--bg-color', bgColor);
+
         // 3. Apply Layout Settings
         if (settings) {
             if (settings.colCount) root.style.setProperty('--col-count', settings.colCount);
@@ -59,12 +63,28 @@
     window.__LL_BOOT = { settings, bgImage: customBg };
 
     // 4. Dials show as soon as the DOM is ready (no waiting on the image).
-    // The background layer appears once decoded: instantly if that happens before
-    // first paint, otherwise with a short fade over the dark fallback colour.
+    // The background layer appears once fully decoded (so it never paints in strips from
+    // top to bottom): instantly if that happens before first paint, otherwise with a short
+    // fade over the picture's average colour.
     const imgLoader = new Image();
-    imgLoader.onload = imgLoader.onerror = () => {
+    imgLoader.src = bgImageURL;
+    imgLoader.decode().catch(() => { }).then(() => {
         root.classList.add('bg-ready');
         performance.mark('ll-bg');
-    };
-    imgLoader.src = bgImageURL;
+        // Off the critical path: remember the average colour for the next new tab
+        setTimeout(() => {
+            try {
+                const ctx = document.createElement('canvas').getContext('2d', { willReadFrequently: true });
+                ctx.canvas.width = ctx.canvas.height = 8;
+                ctx.drawImage(imgLoader, 0, 0, 8, 8);
+                const px = ctx.getImageData(0, 0, 8, 8).data;
+                const avg = [0, 1, 2].map(c => {
+                    let sum = 0;
+                    for (let i = c; i < px.length; i += 4) sum += px[i];
+                    return Math.round(sum / 64);
+                });
+                localStorage.setItem('bgColor', `rgb(${avg.join(', ')})`);
+            } catch (e) { }
+        }, 500);
+    });
 })();

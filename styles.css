@@ -88,8 +88,8 @@ body {
     align-items: center;
     justify-content: center;
 
-    /* Dark fallback matches the dark overlay of most wallpapers */
-    background-color: #1a1a1a;
+    /* Until the wallpaper is decoded: its average colour (init.js), or dark on the very first run */
+    background-color: var(--bg-color, #1a1a1a);
 
     /* Prevent scrollbars during load */
     overflow: hidden;
