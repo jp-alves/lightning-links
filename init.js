@@ -56,8 +56,7 @@
     }
 
     // Appearance before first paint, so menus and sheets never flash the wrong colours
-    root.dataset.theme = LL.appearance.resolveTheme(settings && settings.theme,
-        window.matchMedia('(prefers-color-scheme: dark)').matches);
+    root.dataset.theme = LL.appearance.resolveTheme(settings && settings.theme);
     root.dataset.labelColor = (settings && settings.labelColor) || 'light';
 
     // Parsed once here; script.js reuses it instead of parsing again

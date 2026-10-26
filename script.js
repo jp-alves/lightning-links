@@ -161,7 +161,7 @@
 
         bgImage: 'backgrounds/bg1.jpg',
 
-        theme: 'auto',
+        theme: 'light',
         labelScale: 100,
         labelColor: 'light',
 
@@ -495,9 +495,9 @@
         DOM.labelRange.value = labelScale();
         DOM.labelVal.textContent = labelScale() + '%';
 
-        // Appearance: "auto" follows the system light/dark setting
+        // Appearance: light or dark (older "auto" settings show as light)
         applyTheme();
-        const themeInput = DOM.themeOptions.querySelector(`input[value="${settings.theme || 'auto'}"]`);
+        const themeInput = DOM.themeOptions.querySelector(`input[value="${LL.appearance.resolveTheme(settings.theme)}"]`);
         if (themeInput) themeInput.checked = true;
 
         // Name color: light (white) or dark names under the icons
@@ -565,10 +565,8 @@
         return settings.bgImage === 'custom' ? customBg : settings.bgImage;
     }
 
-    const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
-
     function applyTheme() {
-        document.documentElement.dataset.theme = LL.appearance.resolveTheme(settings.theme, darkQuery.matches);
+        document.documentElement.dataset.theme = LL.appearance.resolveTheme(settings.theme);
     }
 
     function persistSettings() {
@@ -1082,8 +1080,6 @@
             settings.theme = e.target.value;
             saveSettings();
         };
-
-        darkQuery.addEventListener('change', applyTheme);
 
         DOM.labelColorOptions.onchange = (e) => {
             settings.labelColor = e.target.value;
