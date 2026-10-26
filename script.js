@@ -1539,6 +1539,8 @@
                 ? imported.workspaces
                 : Object.assign({}, workspaces, { Home: imported.workspaces.Home }); // v1.0 single-list backup goes into Home
             const nextSettings = Object.assign({}, DEFAULT_SETTINGS, imported.settings);
+            // Offline icons start off after an import: turning them on asks for permission, which only the toggle can do
+            nextSettings.cacheIcons = false;
             // v1.0 backups carry the custom background inside settings
             const importedBg = imported.bgImage ||
                 (nextSettings.bgImage && String(nextSettings.bgImage).startsWith('data:') ? nextSettings.bgImage : null);
@@ -1552,7 +1554,6 @@
             ];
             const extras = [];
             if (importedBg) extras.push(['bgImage', importedBg]);
-            if (imported.iconCache) extras.push([LL.iconcache.KEY, JSON.stringify(imported.iconCache)]);
 
             // Everything at once; if that doesn't fit, the links and settings alone (icons make room)
             let note = '';
@@ -1566,7 +1567,7 @@
                     showNotice({ title: 'Backup not imported', message: 'There isn’t enough storage space. Nothing was changed.' });
                     return;
                 }
-                note = importedBg ? 'The wallpaper was too large to keep, so the default one is used.' : 'Icons saved for offline use were not restored.';
+                if (importedBg) note = 'The wallpaper was too large to keep, so the default one is used.';
             }
 
             // Storage is written: now switch the page over
@@ -1574,8 +1575,8 @@
             lastActiveWorkspace = imported.lastActiveWorkspace;
             settings = nextSettings;
             if (extrasSaved && importedBg) customBg = importedBg;
-            if (extrasSaved && imported.iconCache) iconCache = imported.iconCache;
-            else if (result === 'evicted') iconCache = {};
+            iconCache = {};
+            localStorage.removeItem(LL.iconcache.KEY);
             applySettings();
             renderDials();
             renderBackgroundOptions();

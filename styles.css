@@ -250,6 +250,26 @@ button {
     font-weight: 400;
 }
 
+/* Dark appearance: dark glass, light names, a dark selected tab */
+:root[data-theme="dark"] .glass {
+    background: rgba(28, 28, 30, 0.72);
+    box-shadow: inset 0 0 0 0.5px rgba(255, 255, 255, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
+:root[data-theme="dark"] .settings-trigger:hover {
+    background: rgba(58, 58, 60, 0.85);
+}
+
+:root[data-theme="dark"] .workspace-tab:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+:root[data-theme="dark"] .workspace-tab.active,
+:root[data-theme="dark"] .workspace-tab.drag-ghost.active {
+    background: var(--segment-on);
+    color: var(--label);
+}
+
 /* --- MAIN GRID --- */
 .container {
     display: grid;
@@ -390,6 +410,16 @@ button {
 .add-btn:hover .icon {
     background: rgba(255, 255, 255, 0.26);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55), 0 10px 24px rgba(0, 0, 0, 0.18);
+}
+
+:root[data-theme="dark"] .add-btn .icon {
+    background: rgba(28, 28, 30, 0.6);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+}
+
+:root[data-theme="dark"] .add-btn:hover .icon {
+    background: rgba(44, 44, 46, 0.75);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.24), 0 10px 24px rgba(0, 0, 0, 0.3);
 }
 
 /* --- FOLDERS: glass icons holding small app icons, as in iOS --- */
