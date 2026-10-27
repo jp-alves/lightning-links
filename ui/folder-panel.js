@@ -46,16 +46,16 @@
                 return;
             }
             // Opening a site from the folder closes it (the page navigates, or a new tab opens)
-            if (e.target.closest('a.dial') && !e.defaultPrevented) close(true);
+            if (e.target.closest('a.lightning') && !e.defaultPrevented) close(true);
         });
     }
 
     function render() {
         const { folder, opts } = state;
         const frag = document.createDocumentFragment();
-        folder.items.forEach((dial, i) => frag.appendChild(opts.renderItem(dial, i)));
+        folder.items.forEach((lightning, i) => frag.appendChild(opts.renderItem(lightning, i)));
         const add = document.createElement('div');
-        add.className = 'dial add-btn folder-add';
+        add.className = 'lightning add-btn folder-add';
         add.dataset.key = 'add';
         add.setAttribute('role', 'button');
         add.setAttribute('aria-label', 'Add website to this folder');
@@ -71,7 +71,7 @@
         const fitCols = Math.max(1, Math.floor((window.innerWidth - 40 - 56 + gap) / (cell + gap)));
         const style = els.grid.style;
         style.setProperty('--col-count', Math.min(folder.items.length + 1, v.cols, fitCols));
-        style.setProperty('--dial-width', v.dialWidth);
+        style.setProperty('--lightning-width', v.lightningWidth);
         style.setProperty('--cell-width', v.cellWidth);
         style.setProperty('--row-pull', v.rowPull);
         style.setProperty('--col-gap', v.colGap);
@@ -87,7 +87,7 @@
         return `translate(${dx}px, ${dy}px) scale(${from.width / to.width}, ${from.height / to.height})`;
     }
 
-    // opts: { renderItem(dial, i), onRename(name), onAdd(), onClose(), getFolderEl(), layout() -> {cols, dialWidth, colGap, rowGap} }
+    // opts: { renderItem(lightning, i), onRename(name), onAdd(), onClose(), getFolderEl(), layout() -> {cols, lightningWidth, colGap, rowGap} }
     function open(folderEl, folder, opts) {
         init();
         state = { folder, opts };

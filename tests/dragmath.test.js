@@ -9,8 +9,8 @@ const rect = (col, row) => {
 };
 const grid = [rect(0, 0), rect(1, 0), rect(2, 0), rect(0, 1), rect(1, 1), rect(2, 1)];
 
-test('zone: exact centre is a group zone', () => {
-    assert.strictEqual(zone(grid[0], 50, 38), 'centre');
+test('zone: exact center is a group zone', () => {
+    assert.strictEqual(zone(grid[0], 50, 38), 'center');
 });
 
 test('zone: near the edge is a reorder zone', () => {

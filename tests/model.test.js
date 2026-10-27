@@ -9,7 +9,7 @@ const X = { name: 'X', url: 'x', img: 'x.png' };
 const Y = { name: 'Y', url: 'y', img: 'y.png' };
 const folder = (items) => ({ type: 'folder', id: 'f', name: 'F', items });
 
-test('isFolder distinguishes folders from dials', () => {
+test('isFolder distinguishes folders from lightnings', () => {
     assert.strictEqual(model.isFolder(folder([])), true);
     assert.strictEqual(model.isFolder(A), false);
 });
@@ -28,7 +28,7 @@ test('createFolder: dragging later item onto earlier one', () => {
     assert.deepStrictEqual(f.items, [A, C]);
 });
 
-test('addToFolder appends the dragged dial', () => {
+test('addToFolder appends the dragged lightning', () => {
     const items = [A, folder([X])];
     model.addToFolder(items, 0, 1);
     assert.deepStrictEqual(items, [folder([X, A])]);
@@ -58,9 +58,9 @@ test('moveItem reorders in place', () => {
     assert.deepStrictEqual(items, [B, C, A]);
 });
 
-test('forEachDial visits dials inside folders with workspace names', () => {
+test('forEachLightning visits lightnings inside folders with workspace names', () => {
     const seen = [];
-    model.forEachDial({ Home: [A, folder([X])], Work: [B] }, (d, ws) => seen.push(d.name + '@' + ws));
+    model.forEachLightning({ Home: [A, folder([X])], Work: [B] }, (d, ws) => seen.push(d.name + '@' + ws));
     assert.deepStrictEqual(seen, ['A@Home', 'X@Home', 'B@Work']);
 });
 
@@ -69,7 +69,7 @@ test('normalizeImport accepts v1.0 dials format and coerces numbers', () => {
     assert.deepStrictEqual(r.workspaces, { Home: [A] });
     assert.strictEqual(r.lastActiveWorkspace, 'Home');
     assert.strictEqual(r.settings.colCount, 6);
-    assert.strictEqual(r.settings.dialSize, 160);
+    assert.strictEqual(r.settings.lightningSize, 160);
 });
 
 test('normalizeImport: name size comes back as a number', () => {
@@ -102,7 +102,7 @@ test('normalizeImport rejects malformed workspaces instead of saving them', () =
     assert.strictEqual(model.normalizeImport({ dials: [null], settings: {} }), null);
 });
 
-test('normalizeImport accepts folders with dial items', () => {
+test('normalizeImport accepts folders with lightning items', () => {
     const f = { type: 'folder', id: 'f', name: 'F', items: [A, B] };
     const r = model.normalizeImport({ workspaces: { Home: [f, C] }, settings: {} });
     assert.deepStrictEqual(r.workspaces.Home, [f, C]);
@@ -129,4 +129,10 @@ test('renameKey keeps the workspace in its place', () => {
     const r = model.renameKey(ws, 'Home', 'Personal');
     assert.deepStrictEqual(Object.keys(r), ['Personal', 'Work', 'Study']);
     assert.deepStrictEqual(r.Personal, [A]);
+});
+
+test('migrateSettings moves dialSize to lightningSize', () => {
+    assert.deepStrictEqual(model.migrateSettings({ dialSize: 120, colCount: 6 }), { lightningSize: 120, colCount: 6 });
+    assert.deepStrictEqual(model.migrateSettings({ dialSize: 120, lightningSize: 140 }), { lightningSize: 140 });
+    assert.strictEqual(model.migrateSettings(null), null);
 });

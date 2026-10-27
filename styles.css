@@ -24,8 +24,8 @@
 :root {
     /* Layout (overwritten by init.js / script.js) */
     --col-count: 6;
-    --dial-width: 160px;          /* sizes the icon (60% of it) */
-    --cell-width: 160px;          /* grid column; narrower than --dial-width when spacing is negative */
+    --lightning-width: 160px;          /* sizes the icon (60% of it) */
+    --cell-width: 160px;          /* grid column; narrower than --lightning-width when spacing is negative */
     --col-gap: 20px;
     --label-scale: 1;
     --row-pull: 0px;              /* negative vertical spacing: each row is pulled up by this */
@@ -35,7 +35,7 @@
     --font: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
     --ease: cubic-bezier(.2, .7, .3, 1);
 
-    /* Apple system colours, light appearance */
+    /* Apple system colors, light appearance */
     --label: #1d1d1f;
     --label-secondary: #6e6e73;          /* 5.1:1 on white */
     --accent: #0071e3;                   /* white text on it: 4.9:1 */
@@ -88,7 +88,7 @@ body {
     align-items: center;
     justify-content: center;
 
-    /* Until the wallpaper is decoded: its average colour (init.js), or dark on the very first run */
+    /* Until the wallpaper is decoded: its average color (init.js), or dark on the very first run */
     background-color: var(--bg-color, #1a1a1a);
 
     /* Prevent scrollbars during load */
@@ -294,8 +294,8 @@ button {
     display: none;
 }
 
-/* --- DIALS: app icons with their name underneath --- */
-.dial {
+/* --- LIGHTNINGS: app icons with their name underneath --- */
+.lightning {
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -309,18 +309,18 @@ button {
 }
 
 /* Negative vertical spacing: a negative bottom margin shortens each grid row */
-.container .dial,
-.folder-grid .dial {
+.container .lightning,
+.folder-grid .lightning {
     margin-bottom: var(--row-pull);
 }
 
 /* With negative spacing icons overlap; the one under the pointer comes to the front */
-.dial:hover {
+.lightning:hover {
     z-index: 2;
 }
 
-.dial .icon {
-    width: calc(var(--dial-width) * 0.6);
+.lightning .icon {
+    width: calc(var(--lightning-width) * 0.6);
     aspect-ratio: 1;
     border-radius: 22.5%;
     background: #fff;
@@ -331,18 +331,18 @@ button {
     transition: transform 180ms var(--ease), box-shadow 180ms ease-out;
 }
 
-.dial .icon img {
+.lightning .icon img {
     width: 66%;
     height: 66%;
     object-fit: contain;
     pointer-events: none;
 }
 
-.dial > span {
+.lightning > span {
     /* At least the icon's width, so names stay readable when cells overlap */
-    max-width: max(100%, calc(var(--dial-width) * 0.6));
+    max-width: max(100%, calc(var(--lightning-width) * 0.6));
     /* Scales with the icon, times the Name size setting; never below Apple's 10px minimum */
-    font-size: max(10px, calc(clamp(11px, calc(var(--dial-width) * 0.08), 14px) * var(--label-scale)));
+    font-size: max(10px, calc(clamp(11px, calc(var(--lightning-width) * 0.08), 14px) * var(--label-scale)));
     font-weight: 600;
     line-height: 1.25;
     letter-spacing: -0.005em;
@@ -356,35 +356,35 @@ button {
 }
 
 /* Name color: Dark, for bright wallpapers; a soft white halo keeps it readable */
-:root[data-label-color="dark"] .dial > span {
+:root[data-label-color="dark"] .lightning > span {
     color: #1d1d1f;
     text-shadow: 0 0 2px rgba(255, 255, 255, 0.8), 0 0 6px rgba(255, 255, 255, 0.55), 0 0 14px rgba(255, 255, 255, 0.35);
 }
 
-.dial:hover .icon {
+.lightning:hover .icon {
     transform: translateY(-3px);
     box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.06), 0 4px 8px rgba(0, 0, 0, 0.12), 0 14px 28px rgba(0, 0, 0, 0.26);
 }
 
-.dial:active .icon {
+.lightning:active .icon {
     transform: scale(0.94);
     transition-duration: 90ms;
 }
 
-.dial:focus-visible {
+.lightning:focus-visible {
     outline: none;
 }
 
-.dial:focus-visible .icon {
+.lightning:focus-visible .icon {
     box-shadow: 0 0 0 3px #fff, 0 0 0 6px var(--accent), 0 8px 20px rgba(0, 0, 0, 0.2);
 }
 
-/* New dial fades and scales into place */
-.dial.entering {
-    animation: dial-enter 200ms var(--ease);
+/* New lightning fades and scales into place */
+.lightning.entering {
+    animation: lightning-enter 200ms var(--ease);
 }
 
-@keyframes dial-enter {
+@keyframes lightning-enter {
     from {
         opacity: 0;
         transform: scale(0.9);
@@ -423,7 +423,7 @@ button {
 }
 
 /* --- FOLDERS: glass icons holding small app icons, as in iOS --- */
-.dial.folder .icon {
+.lightning.folder .icon {
     background: rgba(255, 255, 255, 0.24);
     -webkit-backdrop-filter: blur(20px) saturate(1.6);
     backdrop-filter: blur(20px) saturate(1.6);
@@ -437,8 +437,8 @@ button {
     place-content: center;
 }
 
-/* More specific than `.dial .icon img`, which sizes a single logo */
-.dial .folder-preview img {
+/* More specific than `.lightning .icon img`, which sizes a single logo */
+.lightning .folder-preview img {
     width: 100%;
     height: auto;
     aspect-ratio: 1;
@@ -452,7 +452,7 @@ button {
 
 /* --- DRAG & DROP STATES --- */
 /* The real item keeps its slot, invisible, while its floating copy is dragged */
-.dial.drag-source {
+.lightning.drag-source {
     opacity: 0;
 }
 
@@ -464,23 +464,23 @@ button {
     pointer-events: none;
 }
 
-.dial.dragging {
+.lightning.dragging {
     z-index: 1000;
     cursor: grabbing;
     will-change: transform;
 }
 
-.dial.dragging .icon {
+.lightning.dragging .icon {
     box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.06), 0 10px 20px rgba(0, 0, 0, 0.2), 0 22px 44px rgba(0, 0, 0, 0.3);
 }
 
 /* While dragging, the hover lift would fight the sliding transforms */
-.drag-active .dial:hover:not(.dragging) .icon {
+.drag-active .lightning:hover:not(.dragging) .icon {
     transform: none;
 }
 
 /* Holding an icon over another one: they will become a folder */
-.dial.group-target .icon {
+.lightning.group-target .icon {
     transform: scale(1.12);
     box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.9), 0 12px 28px rgba(0, 0, 0, 0.3);
 }
@@ -1096,7 +1096,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb {
 
 /* --- ACCESSIBILITY PREFERENCES --- */
 @media (prefers-reduced-motion: reduce) {
-    .dial .icon,
+    .lightning .icon,
     .folder-name,
     .context-menu,
     .modal-content,
@@ -1125,7 +1125,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb {
 
     .folder-backdrop,
     .folder-panel,
-    .dial.folder .icon,
+    .lightning.folder .icon,
     .add-btn .icon {
         -webkit-backdrop-filter: none;
         backdrop-filter: none;
@@ -1139,7 +1139,7 @@ input[type=range]:focus-visible::-webkit-slider-thumb {
         background: rgba(44, 44, 46, 0.95);
     }
 
-    .dial.folder .icon,
+    .lightning.folder .icon,
     .add-btn .icon {
         background: rgba(44, 44, 46, 0.85);
     }
@@ -1154,12 +1154,12 @@ input[type=range]:focus-visible::-webkit-slider-thumb {
         box-shadow: inset 0 0 0 1px rgba(128, 128, 128, 0.7), var(--menu-shadow);
     }
 
-    .dial > span,
+    .lightning > span,
     .workspace-tab {
         text-shadow: 0 0 2px #000, 0 1px 3px #000;
     }
 
-    :root[data-label-color="dark"] .dial > span {
+    :root[data-label-color="dark"] .lightning > span {
         text-shadow: 0 0 2px #fff, 0 1px 3px #fff;
     }
 }

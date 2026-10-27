@@ -3,8 +3,8 @@
     'use strict';
 
     const START_DISTANCE = 5;
-    // The gap moves only once the pointer settles, so sweeping towards a dial's
-    // centre (to make a folder) doesn't push that dial away first
+    // The gap moves only once the pointer settles, so sweeping towards a lightning's
+    // center (to make a folder) doesn't push that lightning away first
     const REORDER_DELAY = 200;
     const SLIDE = 'transform 200ms cubic-bezier(.2, .7, .3, 1)';
     const EDGE = 40;        // px from a scrollable grid's edge that starts auto-scroll
@@ -17,7 +17,7 @@
         let press = null;   // pointerdown candidate
         let drag = null;    // active drag state
         let suppressClick = false;
-        let cancelledPointer = false; // Esc pressed mid-drag: the coming release must not click
+        let canceledPointer = false; // Esc pressed mid-drag: the coming release must not click
 
         const items = () => [...container.querySelectorAll(opts.itemSelector)];
         const toRect = (r) => ({ left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height });
@@ -35,7 +35,7 @@
             const ghost = el.cloneNode(true);
             ghost.removeAttribute('data-key');
             ghost.classList.add('drag-ghost', 'dragging');
-            ghost.style.setProperty('--dial-width', getComputedStyle(container).getPropertyValue('--dial-width'));
+            ghost.style.setProperty('--lightning-width', getComputedStyle(container).getPropertyValue('--lightning-width'));
             Object.assign(ghost.style, {
                 left: rect.left + 'px', top: rect.top + 'px',
                 width: rect.width + 'px', height: rect.height + 'px'
@@ -136,13 +136,13 @@
                 }
             }
 
-            // Hovering the centre of another item holds the layout still and arms grouping
+            // Hovering the center of another item holds the layout still and arms grouping
             const target = drag.others.findIndex((el, j) => {
                 const r = slotOf(j);
                 return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
             });
             const groupable = target > -1 && (!opts.canGroup || opts.canGroup(drag.from, target < drag.from ? target : target + 1));
-            if (groupable && LL.dragmath.zone(slotOf(target), x, y) === 'centre') {
+            if (groupable && LL.dragmath.zone(slotOf(target), x, y) === 'center') {
                 clearPending();
                 if (drag.holdTarget !== target) {
                     clearHold();
@@ -182,8 +182,8 @@
             const groupTarget = d.groupTarget;
             // Dropping before the gap settled still lands where the pointer is
             if (commit && d.groupTarget === -1 && x !== undefined) {
-                const onCentre = d.holdTarget > -1;
-                if (!onCentre) d.gap = gapAt(x, y);
+                const onCenter = d.holdTarget > -1;
+                if (!onCenter) d.gap = gapAt(x, y);
             }
             clearPending();
             clearHold();
@@ -250,8 +250,8 @@
 
         function onPointerUp(e) {
             press = null;
-            if (cancelledPointer) {
-                cancelledPointer = false;
+            if (canceledPointer) {
+                canceledPointer = false;
                 suppressNextClick();
                 return;
             }
@@ -270,7 +270,7 @@
 
         function onKeyDown(e) {
             if (e.key === 'Escape' && drag) {
-                cancelledPointer = true;
+                canceledPointer = true;
                 finish(false);
             }
         }
@@ -295,7 +295,7 @@
         document.addEventListener('keydown', onKeyDown);
 
         return {
-            // Continue a drag that started elsewhere (e.g. a dial dragged out of a folder)
+            // Continue a drag that started elsewhere (e.g. a lightning dragged out of a folder)
             begin(el, e) {
                 if (drag) return;
                 const r = el.getBoundingClientRect();

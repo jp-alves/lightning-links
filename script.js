@@ -109,7 +109,7 @@
 
     // State
 
-    // Which dial the add/edit modal and the context menu act on:
+    // Which lightning the add/edit modal and the context menu act on:
     // { index, childIndex } where childIndex > -1 means inside the folder at `index`
     let editingTarget = null;
 
@@ -122,7 +122,7 @@
 
 
 
-    const defaultDials = [
+    const defaultLightnings = [
 
         { name: "Google", url: "https://www.google.com", img: "https://www.google.com/s2/favicons?domain=google.com&sz=128" },
 
@@ -153,7 +153,7 @@
 
         colCount: 6,
 
-        dialSize: 160,
+        lightningSize: 160,
 
         colGap: 20,
 
@@ -176,13 +176,13 @@
 
     function migrateData() {
 
-        const oldDials = localStorage.getItem('myDials');
+        const oldLightnings = localStorage.getItem('myDials');
 
-        if (oldDials) {
+        if (oldLightnings) {
 
             try {
 
-                workspaces['Home'] = JSON.parse(oldDials);
+                workspaces['Home'] = JSON.parse(oldLightnings);
 
                 localStorage.removeItem('myDials');
 
@@ -194,7 +194,7 @@
 
                 // If migration fails, start with default
 
-                workspaces['Home'] = defaultDials;
+                workspaces['Home'] = defaultLightnings;
 
             }
 
@@ -208,7 +208,7 @@
 
                 lastActiveWorkspace = localStorage.getItem('lastActiveWorkspace') || 'Home';
             } else {
-                workspaces['Home'] = defaultDials;
+                workspaces['Home'] = defaultLightnings;
             }
         }
         // Home can be renamed or deleted: fall back to the first workspace there is
@@ -216,7 +216,7 @@
 
     }
 
-    function getActiveDials() {
+    function getActiveLightnings() {
 
         return workspaces[lastActiveWorkspace] || [];
 
@@ -239,7 +239,7 @@
             } catch (e) { }
             if (DOM.grid) {
                 renderWorkspacesTabs();
-                renderDials();
+                renderLightnings();
             }
         }
         return result !== 'full';
@@ -265,9 +265,9 @@
 
         applySettings();
 
-        renderDials();
+        renderLightnings();
 
-        performance.mark('ll-dials');
+        performance.mark('ll-lightnings');
 
         renderBackgroundOptions();
 
@@ -284,8 +284,8 @@
     // Every unique remote icon URL across all workspaces and folders
     function collectIconUrls() {
         const urls = new Set();
-        LL.model.forEachDial(workspaces, dial => {
-            if (dial.img && /^https?:/.test(dial.img)) urls.add(dial.img);
+        LL.model.forEachLightning(workspaces, lightning => {
+            if (lightning.img && /^https?:/.test(lightning.img)) urls.add(lightning.img);
         });
         return [...urls];
     }
@@ -301,7 +301,7 @@
         }
         // Uploaded icons (data: URLs) and bundled ones are already stored, so they count as saved
         const icons = new Set();
-        LL.model.forEachDial(workspaces, dial => { if (dial.img) icons.add(dial.img); });
+        LL.model.forEachLightning(workspaces, lightning => { if (lightning.img) icons.add(lightning.img); });
         const saved = [...icons].filter(img => !/^https?:/.test(img) || img in iconCache).length;
         let text = `${saved} of ${icons.size} icons saved for offline`;
         if (failed) text += ` · ${failed} couldn't be saved`;
@@ -318,7 +318,7 @@
         let storageFull = false;
         if (result.saved) {
             storageFull = !LL.iconcache.saveCache(localStorage, iconCache);
-            renderDials();
+            renderLightnings();
         }
         updateIconCacheStatus(storageFull, result.failed);
     }
@@ -327,7 +327,7 @@
 
     function cacheDOMElements() {
 
-        DOM.grid = document.getElementById('dial-grid');
+        DOM.grid = document.getElementById('lightning-grid');
 
         DOM.addBtn = document.getElementById('add-btn');
 
@@ -482,9 +482,9 @@
 
         DOM.colVal.textContent = DOM.colRange.value = settings.colCount;
 
-        DOM.sizeVal.textContent = Math.round((settings.dialSize / 160) * 100) + '%';
+        DOM.sizeVal.textContent = Math.round((settings.lightningSize / 160) * 100) + '%';
 
-        DOM.sizeRange.value = settings.dialSize;
+        DOM.sizeRange.value = settings.lightningSize;
 
         DOM.hGapRange.value = settings.colGap;
         DOM.hGapVal.textContent = settings.colGap + 'px';
@@ -523,24 +523,24 @@
         const fit = LL.layout.computeFit({
             availW: window.innerWidth - 40,
             availH: Math.min(window.innerHeight * 0.9, window.innerHeight - 2 * (barBottom + 10)) - 40,
-            count: getActiveDials().length + 1, // + the add button
+            count: getActiveLightnings().length + 1, // + the add button
             cols: settings.colCount,
-            dialSize: settings.dialSize,
+            lightningSize: settings.lightningSize,
             colGap: settings.colGap,
             rowGap: settings.rowGap,
             autoFit: settings.autoFit !== false,
-            aspect: LL.layout.cellAspect(settings.dialSize, labelScale())
+            aspect: LL.layout.cellAspect(settings.lightningSize, labelScale())
         });
         // Negative horizontal spacing narrows the cells (icons move closer, then overlap);
         // a cell never gets narrower than 30% of the icon cell, so icons stay distinct
-        const cellWidth = Math.max(Math.round(fit.dialSize * 0.3), fit.dialSize + Math.min(fit.colGap, 0));
+        const cellWidth = Math.max(Math.round(fit.lightningSize * 0.3), fit.lightningSize + Math.min(fit.colGap, 0));
         const style = DOM.grid.style;
         style.setProperty('--col-count', fit.cols);
-        style.setProperty('--dial-width', fit.dialSize + 'px');
+        style.setProperty('--lightning-width', fit.lightningSize + 'px');
         style.setProperty('--cell-width', cellWidth + 'px');
         style.setProperty('--col-gap', Math.max(fit.colGap, 0) + 'px');
         // Negative vertical spacing pulls each row up, at most 70% of a row, so icons stay distinct
-        const rowHeight = fit.dialSize / LL.layout.cellAspect(fit.dialSize, labelScale());
+        const rowHeight = fit.lightningSize / LL.layout.cellAspect(fit.lightningSize, labelScale());
         style.setProperty('--row-pull', Math.max(Math.min(fit.rowGap, 0), -Math.round(rowHeight * 0.7)) + 'px');
         document.documentElement.style.setProperty('--label-scale', labelScale() / 100);
         style.setProperty('--row-gap', Math.max(fit.rowGap, 0) + 'px');
@@ -583,38 +583,38 @@
 
     // Optimized render using DocumentFragment
 
-    function buildDialEl(dial, index, key) {
+    function buildLightningEl(lightning, index, key) {
         const div = document.createElement('a');
-        div.className = 'dial';
-        div.href = dial.url;
+        div.className = 'lightning';
+        div.href = lightning.url;
         div.draggable = false;
         div.dataset.index = index;
         div.dataset.key = key;
         const img = document.createElement('img');
-        img.src = LL.iconcache.resolveIcon(iconCache, dial.img);
+        img.src = LL.iconcache.resolveIcon(iconCache, lightning.img);
         img.decoding = 'async';
-        img.alt = dial.name;
+        img.alt = lightning.name;
         img.onerror = () => { img.onerror = null; img.src = 'icons/icon128.png'; };
         const icon = document.createElement('div');
         icon.className = 'icon';
         icon.appendChild(img);
         const label = document.createElement('span');
-        label.textContent = dial.name;
+        label.textContent = lightning.name;
         div.append(icon, label);
         return div;
     }
 
     function buildFolderEl(folder, index) {
         const div = document.createElement('div');
-        div.className = 'dial folder';
+        div.className = 'lightning folder';
         div.dataset.index = index;
         div.dataset.key = 'folder:' + folder.id;
         div.tabIndex = 0;
         const preview = document.createElement('div');
         preview.className = 'icon folder-preview';
-        folder.items.slice(0, 4).forEach(dial => {
+        folder.items.slice(0, 4).forEach(lightning => {
             const img = document.createElement('img');
-            img.src = LL.iconcache.resolveIcon(iconCache, dial.img);
+            img.src = LL.iconcache.resolveIcon(iconCache, lightning.img);
             img.decoding = 'async';
             img.alt = '';
             img.onerror = () => { img.onerror = null; img.src = 'icons/icon128.png'; };
@@ -629,19 +629,19 @@
     // Stable identity across re-renders (for FLIP): url plus occurrence count
     function keyMaker() {
         const seen = {};
-        return (dial) => {
-            seen[dial.url] = (seen[dial.url] || 0) + 1;
-            return dial.url + '#' + seen[dial.url];
+        return (lightning) => {
+            seen[lightning.url] = (seen[lightning.url] || 0) + 1;
+            return lightning.url + '#' + seen[lightning.url];
         };
     }
 
     // Optimized render using DocumentFragment
-    function renderDials() {
-        DOM.grid.querySelectorAll('.dial:not(#add-btn)').forEach(el => el.remove());
+    function renderLightnings() {
+        DOM.grid.querySelectorAll('.lightning:not(#add-btn)').forEach(el => el.remove());
         const fragment = document.createDocumentFragment();
         const key = keyMaker();
-        getActiveDials().forEach((item, index) => {
-            fragment.appendChild(LL.model.isFolder(item) ? buildFolderEl(item, index) : buildDialEl(item, index, key(item)));
+        getActiveLightnings().forEach((item, index) => {
+            fragment.appendChild(LL.model.isFolder(item) ? buildFolderEl(item, index) : buildLightningEl(item, index, key(item)));
         });
         DOM.grid.insertBefore(fragment, DOM.addBtn);
         applyLayoutVars();
@@ -652,7 +652,7 @@
 
     function getOpenFolder() {
         if (!openFolderId) return null;
-        const items = getActiveDials();
+        const items = getActiveLightnings();
         const index = items.findIndex(item => LL.model.isFolder(item) && item.id === openFolderId);
         return index > -1 ? { folder: items[index], index } : null;
     }
@@ -660,11 +660,11 @@
     function folderPanelOptions(folder) {
         const style = DOM.grid.style;
         return {
-            renderItem: (() => { const key = keyMaker(); return (dial, i) => buildDialEl(dial, i, key(dial)); })(),
+            renderItem: (() => { const key = keyMaker(); return (lightning, i) => buildLightningEl(lightning, i, key(lightning)); })(),
             onRename: (name) => {
                 folder.name = name;
                 saveWorkspaces();
-                renderDials();
+                renderLightnings();
             },
             onAdd: () => openAddModal(),
             onClose: () => { openFolderId = null; },
@@ -672,7 +672,7 @@
             // Read live, so the panel follows auto-fit when the window is resized
             layout: () => ({
                 cols: Number(style.getPropertyValue('--col-count')),
-                dialWidth: style.getPropertyValue('--dial-width'),
+                lightningWidth: style.getPropertyValue('--lightning-width'),
                 cellWidth: style.getPropertyValue('--cell-width'),
                 rowPull: style.getPropertyValue('--row-pull'),
                 colGap: style.getPropertyValue('--col-gap'),
@@ -682,8 +682,8 @@
     }
 
     function openFolder(index) {
-        const folder = getActiveDials()[index];
-        const el = DOM.grid.querySelector(`.dial[data-index="${index}"]`);
+        const folder = getActiveLightnings()[index];
+        const el = DOM.grid.querySelector(`.lightning[data-index="${index}"]`);
         openFolderId = folder.id;
         LL.folderPanel.open(el, folder, folderPanelOptions(folder));
     }
@@ -699,13 +699,13 @@
         LL.folderPanel.refresh(open.folder);
     }
 
-    // The list holding a target dial (top level or a folder's items) and its position in it
+    // The list holding a target lightning (top level or a folder's items) and its position in it
     function targetList(target) {
-        const items = getActiveDials();
+        const items = getActiveLightnings();
         return target.childIndex > -1 ? [items[target.index].items, target.childIndex] : [items, target.index];
     }
 
-    function targetDial(target) {
+    function targetLightning(target) {
         const [list, i] = targetList(target);
         return list[i];
     }
@@ -855,7 +855,7 @@
 
                     renderWorkspacesTabs();
 
-                    renderDials();
+                    renderLightnings();
 
                 }
 
@@ -955,7 +955,7 @@
             if (lastActiveWorkspace === name) lastActiveWorkspace = Object.keys(workspaces)[0];
             saveWorkspaces();
             renderWorkspacesTabs();
-            renderDials();
+            renderLightnings();
         };
 
         // Context menu: Open in New Tab
@@ -963,7 +963,7 @@
         DOM.ctxNewTab.onclick = () => {
 
             if (contextTarget) {
-                window.open(targetDial(contextTarget).url, '_blank');
+                window.open(targetLightning(contextTarget).url, '_blank');
             }
 
             DOM.contextMenu.style.display = 'none';
@@ -972,7 +972,7 @@
 
         DOM.ctxIncognito.onclick = () => {
             if (contextTarget && typeof chrome !== 'undefined' && chrome.windows) {
-                chrome.windows.create({ url: targetDial(contextTarget).url, incognito: true });
+                chrome.windows.create({ url: targetLightning(contextTarget).url, incognito: true });
             }
             DOM.contextMenu.style.display = 'none';
         };
@@ -981,7 +981,7 @@
             DOM.contextMenu.style.display = 'none';
             if (!contextTarget) return;
             try {
-                await navigator.clipboard.writeText(targetDial(contextTarget).url);
+                await navigator.clipboard.writeText(targetLightning(contextTarget).url);
                 showToast('Link copied');
             } catch (err) {
                 showToast("Couldn't copy link");
@@ -993,16 +993,16 @@
         DOM.ctxEdit.onclick = () => {
 
             if (contextTarget) {
-                const dial = targetDial(contextTarget);
+                const lightning = targetLightning(contextTarget);
                 editingTarget = contextTarget;
 
                 DOM.modalTitle.textContent = "Edit Website";
 
-                DOM.urlInput.value = dial.url;
+                DOM.urlInput.value = lightning.url;
 
-                DOM.nameInput.value = dial.name;
+                DOM.nameInput.value = lightning.name;
 
-                DOM.imgInput.value = dial.img;
+                DOM.imgInput.value = lightning.img;
 
                 DOM.siteError.textContent = '';
 
@@ -1017,16 +1017,16 @@
         DOM.ctxDelete.onclick = async () => {
             DOM.contextMenu.style.display = 'none';
             const target = contextTarget;
-            if (target && await askConfirm({ title: `Delete “${targetDial(target).name}”?`, message: 'You can add it again later with +.' })) {
+            if (target && await askConfirm({ title: `Delete “${targetLightning(target).name}”?`, message: 'You can add it again later with +.' })) {
                 const container = target.childIndex > -1 ? LL.folderPanel.gridEl() : DOM.grid;
-                const el = container.querySelector(`.dial[data-index="${target.childIndex > -1 ? target.childIndex : target.index}"]`);
+                const el = container.querySelector(`.lightning[data-index="${target.childIndex > -1 ? target.childIndex : target.index}"]`);
                 const remove = () => {
                     const [list, i] = targetList(target);
                     list.splice(i, 1);
-                    LL.model.normalize(getActiveDials());
+                    LL.model.normalize(getActiveLightnings());
                     saveWorkspaces();
-                    if (target.childIndex > -1) LL.flip.flip(container, '.dial', renderDials);
-                    else LL.flip.flip(DOM.grid, '.dial', renderDials);
+                    if (target.childIndex > -1) LL.flip.flip(container, '.lightning', renderLightnings);
+                    else LL.flip.flip(DOM.grid, '.lightning', renderLightnings);
                 };
                 if (el && !LL.flip.reducedMotion()) {
                     el.style.pointerEvents = 'none';
@@ -1053,7 +1053,7 @@
 
         const ranges = [
             [DOM.colRange, 'colCount'],
-            [DOM.sizeRange, 'dialSize'],
+            [DOM.sizeRange, 'lightningSize'],
             [DOM.hGapRange, 'colGap'],
             [DOM.vGapRange, 'rowGap'],
             [DOM.labelRange, 'labelScale']
@@ -1194,24 +1194,24 @@
             else if (DOM.settingsModal.style.display === 'flex') DOM.settingsModal.style.display = 'none';
         });
 
-        // Drag & drop: dials slide aside to open the landing gap; holding on a
-        // dial's centre makes a folder (ui/drag.js)
+        // Drag & drop: lightnings slide aside to open the landing gap; holding on a
+        // lightning's center makes a folder (ui/drag.js)
         const gridDrag = LL.drag.attach(DOM.grid, {
-            itemSelector: '.dial:not(#add-btn)',
+            itemSelector: '.lightning:not(#add-btn)',
             onReorder: (from, to) => {
-                LL.model.moveItem(getActiveDials(), from, to);
+                LL.model.moveItem(getActiveLightnings(), from, to);
                 saveWorkspaces();
-                renderDials();
+                renderLightnings();
             },
             // Folders can't go inside folders
-            canGroup: (from) => !LL.model.isFolder(getActiveDials()[from]),
+            canGroup: (from) => !LL.model.isFolder(getActiveLightnings()[from]),
             onGroup: (from, target) => {
-                const items = getActiveDials();
-                LL.flip.flip(DOM.grid, '.dial', () => {
+                const items = getActiveLightnings();
+                LL.flip.flip(DOM.grid, '.lightning', () => {
                     if (LL.model.isFolder(items[target])) LL.model.addToFolder(items, from, target);
                     else LL.model.createFolder(items, from, target, 'f' + Date.now().toString(36));
                     saveWorkspaces();
-                    renderDials();
+                    renderLightnings();
                 });
             }
         });
@@ -1227,9 +1227,9 @@
             }
         });
 
-        // Inside an open folder: reorder, or drag a dial out to put it back on the grid
+        // Inside an open folder: reorder, or drag a lightning out to put it back on the grid
         LL.drag.attach(LL.folderPanel.gridEl(), {
-            itemSelector: '.dial:not(.add-btn)',
+            itemSelector: '.lightning:not(.add-btn)',
             boundsEl: LL.folderPanel.panelEl(),
             canGroup: () => false,
             onReorder: (from, to) => {
@@ -1237,18 +1237,18 @@
                 if (!open) return;
                 LL.model.moveItem(open.folder.items, from, to);
                 saveWorkspaces();
-                renderDials();
+                renderLightnings();
             },
             onDragOutside: (from, x, y, e) => {
                 const open = getOpenFolder();
                 if (!open) return false;
-                const items = getActiveDials();
-                const dial = open.folder.items[from];
+                const items = getActiveLightnings();
+                const lightning = open.folder.items[from];
                 LL.model.removeFromFolder(items, open.index, from, open.index + 1);
                 saveWorkspaces();
                 LL.folderPanel.close();
-                renderDials();
-                const el = DOM.grid.querySelector(`.dial[data-index="${items.indexOf(dial)}"]`);
+                renderLightnings();
+                const el = DOM.grid.querySelector(`.lightning[data-index="${items.indexOf(lightning)}"]`);
                 if (el) gridDrag.begin(el, e);
                 return true;
             }
@@ -1256,20 +1256,20 @@
 
         // 5. Context Menu
         DOM.grid.addEventListener('contextmenu', (e) => {
-            const dial = e.target.closest('.dial:not(#add-btn)');
-            if (!dial) return;
+            const lightning = e.target.closest('.lightning:not(#add-btn)');
+            if (!lightning) return;
             e.preventDefault();
-            const index = parseInt(dial.dataset.index);
-            if (dial.classList.contains('folder')) showFolderContextMenu(e, index);
+            const index = parseInt(lightning.dataset.index);
+            if (lightning.classList.contains('folder')) showFolderContextMenu(e, index);
             else showContextMenu(e, { index, childIndex: -1 });
         });
 
         LL.folderPanel.gridEl().addEventListener('contextmenu', (e) => {
-            const dial = e.target.closest('.dial:not(.folder-add)');
+            const lightning = e.target.closest('.lightning:not(.folder-add)');
             const open = getOpenFolder();
-            if (!dial || !open) return;
+            if (!lightning || !open) return;
             e.preventDefault();
-            showContextMenu(e, { index: open.index, childIndex: parseInt(dial.dataset.index) });
+            showContextMenu(e, { index: open.index, childIndex: parseInt(lightning.dataset.index) });
         });
 
         // Folders open on click (a drag never reaches here: ui/drag.js swallows that click)
@@ -1294,33 +1294,33 @@
         };
         DOM.ctxFolderOpenAll.onclick = () => {
             hideFolderMenu();
-            getActiveDials()[contextFolderIndex].items.forEach(dial => {
-                if (typeof chrome !== 'undefined' && chrome.tabs) chrome.tabs.create({ url: dial.url, active: false });
-                else window.open(dial.url, '_blank');
+            getActiveLightnings()[contextFolderIndex].items.forEach(lightning => {
+                if (typeof chrome !== 'undefined' && chrome.tabs) chrome.tabs.create({ url: lightning.url, active: false });
+                else window.open(lightning.url, '_blank');
             });
         };
         DOM.ctxFolderUngroup.onclick = () => {
             hideFolderMenu();
-            LL.flip.flip(DOM.grid, '.dial', () => {
-                LL.model.ungroup(getActiveDials(), contextFolderIndex);
+            LL.flip.flip(DOM.grid, '.lightning', () => {
+                LL.model.ungroup(getActiveLightnings(), contextFolderIndex);
                 saveWorkspaces();
-                renderDials();
+                renderLightnings();
             });
         };
         DOM.ctxFolderDelete.onclick = async () => {
             hideFolderMenu();
             const index = contextFolderIndex;
-            const folder = getActiveDials()[index];
+            const folder = getActiveLightnings()[index];
             const n = folder.items.length;
             const ok = await askConfirm({
                 title: `Delete folder “${folder.name}”?`,
                 message: `Its ${n} link${n === 1 ? '' : 's'} will be deleted too. To keep them, choose Ungroup instead.`
             });
-            if (!ok || getActiveDials()[index] !== folder) return;
-            LL.flip.flip(DOM.grid, '.dial', () => {
-                getActiveDials().splice(index, 1);
+            if (!ok || getActiveLightnings()[index] !== folder) return;
+            LL.flip.flip(DOM.grid, '.lightning', () => {
+                getActiveLightnings().splice(index, 1);
                 saveWorkspaces();
-                renderDials();
+                renderLightnings();
             });
         };
 
@@ -1402,7 +1402,7 @@
         closeWorkspaceSheet();
         saveWorkspaces();
         renderWorkspacesTabs();
-        renderDials();
+        renderLightnings();
     }
 
     function openAddModal() {
@@ -1457,26 +1457,26 @@
 
         }
 
-        const dialData = { name, url, img };
-        const open = addFolderId && getActiveDials().find(item => LL.model.isFolder(item) && item.id === addFolderId);
+        const lightningData = { name, url, img };
+        const open = addFolderId && getActiveLightnings().find(item => LL.model.isFolder(item) && item.id === addFolderId);
         if (editingTarget) {
             const [list, i] = targetList(editingTarget);
-            list[i] = dialData;
+            list[i] = lightningData;
             saveWorkspaces();
-            renderDials();
+            renderLightnings();
         } else if (open) {
             // "+" inside an open folder adds into that folder
-            open.items.push(dialData);
+            open.items.push(lightningData);
             saveWorkspaces();
-            LL.flip.flip(LL.folderPanel.gridEl(), '.dial', renderDials);
-            const added = LL.folderPanel.gridEl().querySelector(`.dial[data-index="${open.items.length - 1}"]`);
+            LL.flip.flip(LL.folderPanel.gridEl(), '.lightning', renderLightnings);
+            const added = LL.folderPanel.gridEl().querySelector(`.lightning[data-index="${open.items.length - 1}"]`);
             if (added) added.classList.add('entering');
         } else {
-            const activeDials = getActiveDials();
-            activeDials.push(dialData);
+            const activeLightnings = getActiveLightnings();
+            activeLightnings.push(lightningData);
             saveWorkspaces();
-            LL.flip.flip(DOM.grid, '.dial', renderDials);
-            const added = DOM.grid.querySelector(`.dial[data-index="${activeDials.length - 1}"]`);
+            LL.flip.flip(DOM.grid, '.lightning', renderLightnings);
+            const added = DOM.grid.querySelector(`.lightning[data-index="${activeLightnings.length - 1}"]`);
             if (added) added.classList.add('entering');
         }
         DOM.addModal.style.display = 'none';
@@ -1574,7 +1574,7 @@
             iconCache = {};
             localStorage.removeItem(LL.iconcache.KEY);
             applySettings();
-            renderDials();
+            renderLightnings();
             renderBackgroundOptions();
             renderWorkspacesTabs();
             showNotice({ title: 'Backup imported', message: note || 'Your links and settings have been restored.' });
