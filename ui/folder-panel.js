@@ -58,7 +58,7 @@
         add.className = 'lightning add-btn folder-add';
         add.dataset.key = 'add';
         add.setAttribute('role', 'button');
-        add.setAttribute('aria-label', 'Add website to this folder');
+        add.setAttribute('aria-label', LL.i18n.t('Add website to this folder'));
         add.tabIndex = 0;
         add.innerHTML = '<div class="icon"><svg class="sym"><use href="#i-plus"/></svg></div><span aria-hidden="true">&nbsp;</span>';
         frag.appendChild(add);

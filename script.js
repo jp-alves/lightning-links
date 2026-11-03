@@ -134,9 +134,13 @@
 
         'backgrounds/bg1.jpg', 'backgrounds/bg2.jpg', 'backgrounds/bg3.jpg',
 
-        'backgrounds/bg4.jpg', 'backgrounds/bg5.jpg'
+        'backgrounds/bg4.jpg', 'backgrounds/bg5.jpg', 'backgrounds/bg6.jpg',
+
+        'backgrounds/bg7.jpg', 'backgrounds/bg8.jpg'
 
     ];
+
+    const t = LL.i18n.t;
 
     let workspaces = {};
     let iconCache = LL.iconcache.loadCache(localStorage);
@@ -166,7 +170,8 @@
         labelColor: 'light',
 
         cacheIcons: false,
-        autoFit: true
+        autoFit: true,
+        language: 'en'
 
     };
 
@@ -194,7 +199,8 @@
 
                 // If migration fails, start with default
 
-                workspaces['Home'] = defaultLightnings;
+                lastActiveWorkspace = t('Home');
+                workspaces[lastActiveWorkspace] = defaultLightnings;
 
             }
 
@@ -208,7 +214,8 @@
 
                 lastActiveWorkspace = localStorage.getItem('lastActiveWorkspace') || 'Home';
             } else {
-                workspaces['Home'] = defaultLightnings;
+                lastActiveWorkspace = t('Home');
+                workspaces[lastActiveWorkspace] = defaultLightnings;
             }
         }
         // Home can be renamed or deleted: fall back to the first workspace there is
@@ -232,7 +239,7 @@
             iconCache = {};
             if (DOM.iconCacheStatus) updateIconCacheStatus(true);
         } else if (result === 'full') {
-            showNotice({ title: 'Change not saved', message: 'There isn’t enough storage space for your last change.' });
+            showNotice({ title: t('Change not saved'), message: t('There isn’t enough storage space for your last change.') });
             // Show what is actually stored
             try {
                 workspaces = JSON.parse(localStorage.getItem('myWorkspaces')) || workspaces;
@@ -259,6 +266,9 @@
 
     function init() {
 
+        LL.i18n.translate(document.body);
+        document.title = t('New Tab');
+
         migrateData();
 
         cacheDOMElements();
@@ -269,16 +279,58 @@
 
         performance.mark('ll-lightnings');
 
-        renderBackgroundOptions();
-
         renderWorkspacesTabs();
 
         attachEventListeners();
+
+        // Changing the language reloads the page: come back to where it was changed
+        if (sessionStorage.getItem(REOPEN_SETTINGS_KEY)) {
+            sessionStorage.removeItem(REOPEN_SETTINGS_KEY);
+            openSettings();
+            document.querySelector('.tab[data-target="tab-theme"]').click();
+        }
+
+        if (LL.storage.onboardingPending(localStorage)) startOnboarding();
 
         if (settings.cacheIcons) {
             requestIdleCallback(refreshIconCache);
         }
 
+    }
+
+    // Only a new install pays for the welcome: its code, styles and site list load on demand
+    function startOnboarding() {
+        const style = document.createElement('link');
+        style.rel = 'stylesheet';
+        style.href = 'ui/onboarding.css';
+        style.onload = () => {
+            const script = document.createElement('script');
+            script.src = 'ui/onboarding.js';
+            script.onload = () => LL.onboarding.open({
+                language: LL.i18n.resolve(settings.language),
+                onLanguage: (code) => {
+                    settings.language = code;
+                    persistSettings();
+                    location.reload();
+                },
+                onDone: finishOnboarding
+            });
+            document.head.appendChild(script);
+        };
+        document.head.appendChild(style);
+    }
+
+    // No sites picked (Skip, or Finish with nothing selected): keeps the default lightnings
+    function finishOnboarding(sites) {
+        LL.storage.finishOnboarding(localStorage);
+        if (!sites.length) return;
+        workspaces[lastActiveWorkspace] = sites.map(([name, host, icon = host]) => ({
+            name,
+            url: `https://${host}`,
+            img: `https://www.google.com/s2/favicons?domain=${icon}&sz=128`
+        }));
+        saveWorkspaces();
+        renderLightnings();
     }
 
     // Every unique remote icon URL across all workspaces and folders
@@ -296,15 +348,15 @@
             return;
         }
         if (storageFull) {
-            DOM.iconCacheStatus.textContent = 'Storage full — some icons not saved';
+            DOM.iconCacheStatus.textContent = t('Storage full — some icons not saved');
             return;
         }
         // Uploaded icons (data: URLs) and bundled ones are already stored, so they count as saved
         const icons = new Set();
         LL.model.forEachLightning(workspaces, lightning => { if (lightning.img) icons.add(lightning.img); });
         const saved = [...icons].filter(img => !/^https?:/.test(img) || img in iconCache).length;
-        let text = `${saved} of ${icons.size} icons saved for offline`;
-        if (failed) text += ` · ${failed} couldn't be saved`;
+        let text = t('{saved} of {total} icons saved for offline', { saved, total: icons.size });
+        if (failed) text += ' · ' + t('{n} couldn’t be saved', { n: failed });
         DOM.iconCacheStatus.textContent = text;
     }
 
@@ -423,6 +475,8 @@
         DOM.autoFitToggle = document.getElementById('autofit-toggle');
         DOM.workspacesContainer = document.getElementById('workspaces-container');
         DOM.iconCacheStatus = document.getElementById('icon-cache-status');
+        DOM.languageSelect = document.getElementById('language-select');
+        DOM.bgColorInput = document.getElementById('bg-color-input');
 
     }
 
@@ -463,8 +517,8 @@
             addButton.textContent = '+';
             addButton.tabIndex = 0;
             addButton.setAttribute('role', 'button');
-            addButton.setAttribute('aria-label', 'Add workspace');
-            addButton.title = 'Add workspace';
+            addButton.setAttribute('aria-label', t('Add workspace'));
+            addButton.title = t('Add workspace');
 
             DOM.workspacesTabs.appendChild(addButton);
 
@@ -478,7 +532,12 @@
 
         applyLayoutVars();
 
-        root.style.setProperty('--bg-image', `url('${bgUrl()}')`);
+        const solid = settings.bgImage === 'color';
+        const solidColor = LL.model.solidColor(settings);
+        root.style.setProperty('--bg-image', solid ? 'none' : `url('${bgUrl()}')`);
+        if (solid) root.style.setProperty('--bg-color', solidColor);
+        DOM.bgColorInput.value = solidColor;
+        DOM.bgColorInput.classList.toggle('selected', solid);
 
         DOM.colVal.textContent = DOM.colRange.value = settings.colCount;
 
@@ -756,7 +815,12 @@
 
     // Background options rendering
 
+    // Built the first time the Wallpaper tab opens, so a new tab never fetches the thumbnails
+    let bgOptionsRendered = false;
+
     function renderBackgroundOptions() {
+
+        bgOptionsRendered = true;
 
         DOM.bgGrid.innerHTML = '';
 
@@ -777,7 +841,9 @@
 
         const img = document.createElement('img');
 
-        img.src = src;
+        img.src = isCustom ? src : src.replace('backgrounds/', 'backgrounds/thumbs/').replace('.jpg', '.webp');
+
+        img.decoding = 'async';
 
         img.className = 'bg-option';
 
@@ -803,13 +869,13 @@
             delBtn.className = 'bg-delete-btn';
 
             delBtn.textContent = '×';
-            delBtn.setAttribute('aria-label', 'Remove your picture');
+            delBtn.setAttribute('aria-label', t('Remove your picture'));
 
-            delBtn.title = 'Remove custom background';
+            delBtn.title = t('Remove custom background');
 
             delBtn.onclick = async (e) => {
                 e.stopPropagation();
-                const ok = await askConfirm({ title: 'Remove your picture?', message: 'The wallpaper goes back to the default.', confirmLabel: 'Remove' });
+                const ok = await askConfirm({ title: t('Remove your picture?'), message: t('The wallpaper goes back to the default.'), confirmLabel: t('Remove') });
                 if (ok) {
                     localStorage.removeItem('bgImage');
                     customBg = null;
@@ -829,6 +895,24 @@
 
         DOM.bgGrid.appendChild(wrapper);
 
+    }
+
+    const REOPEN_SETTINGS_KEY = 'reopenSettings';
+
+    // The language list is only needed once Settings is open
+    function openSettings() {
+        if (!DOM.languageSelect.options.length) {
+            LL.i18n.LANGUAGES.forEach(([code, name]) => DOM.languageSelect.add(new Option(name, code)));
+            DOM.languageSelect.value = LL.i18n.resolve(settings.language);
+        }
+        DOM.settingsModal.style.display = 'flex';
+    }
+
+    function selectSolidColor(color) {
+        settings.bgSolid = color;
+        settings.bgImage = 'color';
+        applySettings();
+        document.querySelectorAll('.bg-option').forEach(i => i.classList.remove('selected'));
     }
 
     // Attach all event listeners
@@ -946,8 +1030,8 @@
             if (!name || Object.keys(workspaces).length <= 1) return;
             const count = countLinks(workspaces[name]);
             const ok = await askConfirm({
-                title: `Delete “${name}”?`,
-                message: count ? `Its ${count} link${count === 1 ? '' : 's'} will be deleted too.` : 'This workspace is empty.'
+                title: t('Delete “{name}”?', { name }),
+                message: count ? t(count === 1 ? 'Its 1 link will be deleted too.' : 'Its {n} links will be deleted too.', { n: count }) : t('This workspace is empty.')
             });
             if (!ok) return;
             delete workspaces[name];
@@ -982,9 +1066,9 @@
             if (!contextTarget) return;
             try {
                 await navigator.clipboard.writeText(targetLightning(contextTarget).url);
-                showToast('Link copied');
+                showToast(t('Link copied'));
             } catch (err) {
-                showToast("Couldn't copy link");
+                showToast(t('Couldn’t copy link'));
             }
         };
 
@@ -996,7 +1080,7 @@
                 const lightning = targetLightning(contextTarget);
                 editingTarget = contextTarget;
 
-                DOM.modalTitle.textContent = "Edit Website";
+                DOM.modalTitle.textContent = t('Edit Website');
 
                 DOM.urlInput.value = lightning.url;
 
@@ -1017,7 +1101,7 @@
         DOM.ctxDelete.onclick = async () => {
             DOM.contextMenu.style.display = 'none';
             const target = contextTarget;
-            if (target && await askConfirm({ title: `Delete “${targetLightning(target).name}”?`, message: 'You can add it again later with +.' })) {
+            if (target && await askConfirm({ title: t('Delete “{name}”?', { name: targetLightning(target).name }), message: t('You can add it again later with +.') })) {
                 const container = target.childIndex > -1 ? LL.folderPanel.gridEl() : DOM.grid;
                 const el = container.querySelector(`.lightning[data-index="${target.childIndex > -1 ? target.childIndex : target.index}"]`);
                 const remove = () => {
@@ -1045,7 +1129,22 @@
 
         // Settings modal
 
-        DOM.settingsBtn.onclick = () => DOM.settingsModal.style.display = 'flex';
+        DOM.settingsBtn.onclick = openSettings;
+
+        DOM.languageSelect.onchange = (e) => {
+            settings.language = e.target.value;
+            persistSettings();
+            sessionStorage.setItem(REOPEN_SETTINGS_KEY, '1');
+            location.reload();
+        };
+
+        DOM.bgColorInput.onclick = () => {
+            selectSolidColor(DOM.bgColorInput.value);
+            persistSettings();
+        };
+        // Live while picking; saved once when the picker closes
+        DOM.bgColorInput.oninput = (e) => selectSolidColor(e.target.value);
+        DOM.bgColorInput.onchange = persistSettings;
 
         DOM.closeSettingsBtn.onclick = () => DOM.settingsModal.style.display = 'none';
 
@@ -1132,6 +1231,8 @@
 
                 document.getElementById(tab.dataset.target).classList.add('active');
 
+                if (tab.dataset.target === 'tab-bg' && !bgOptionsRendered) renderBackgroundOptions();
+
             };
 
         });
@@ -1209,7 +1310,7 @@
                 const items = getActiveLightnings();
                 LL.flip.flip(DOM.grid, '.lightning', () => {
                     if (LL.model.isFolder(items[target])) LL.model.addToFolder(items, from, target);
-                    else LL.model.createFolder(items, from, target, 'f' + Date.now().toString(36));
+                    else LL.model.createFolder(items, from, target, 'f' + Date.now().toString(36), t('Folder'));
                     saveWorkspaces();
                     renderLightnings();
                 });
@@ -1313,8 +1414,8 @@
             const folder = getActiveLightnings()[index];
             const n = folder.items.length;
             const ok = await askConfirm({
-                title: `Delete folder “${folder.name}”?`,
-                message: `Its ${n} link${n === 1 ? '' : 's'} will be deleted too. To keep them, choose Ungroup instead.`
+                title: t('Delete folder “{name}”?', { name: folder.name }),
+                message: t(n === 1 ? 'Its 1 link will be deleted too. To keep it, choose Ungroup instead.' : 'Its {n} links will be deleted too. To keep them, choose Ungroup instead.', { n })
             });
             if (!ok || getActiveLightnings()[index] !== folder) return;
             LL.flip.flip(DOM.grid, '.lightning', () => {
@@ -1329,7 +1430,7 @@
     // --- Delete confirmations: a frosted sheet with Cancel (default) and a red action ---
     let confirmResolve = null;
 
-    function askConfirm({ title, message, confirmLabel = 'Delete' }) {
+    function askConfirm({ title, message, confirmLabel = t('Delete') }) {
         DOM.confirmTitle.textContent = title;
         DOM.confirmMessage.textContent = message;
         DOM.confirmOk.textContent = confirmLabel;
@@ -1344,7 +1445,7 @@
     function showNotice({ title, message = '' }) {
         DOM.confirmTitle.textContent = title;
         DOM.confirmMessage.textContent = message;
-        DOM.confirmOk.textContent = 'OK';
+        DOM.confirmOk.textContent = t('OK');
         DOM.confirmOk.className = 'btn btn-primary';
         DOM.confirmCancel.style.display = 'none';
         DOM.confirmModal.style.display = 'flex';
@@ -1368,8 +1469,8 @@
 
     function openWorkspaceSheet(name) {
         renamingWorkspace = name;
-        DOM.workspaceTitle.textContent = name ? 'Rename Workspace' : 'New Workspace';
-        DOM.workspaceSave.textContent = name ? 'Rename' : 'Create';
+        DOM.workspaceTitle.textContent = t(name ? 'Rename Workspace' : 'New Workspace');
+        DOM.workspaceSave.textContent = t(name ? 'Rename' : 'Create');
         DOM.workspaceName.value = name || '';
         DOM.workspaceError.textContent = '';
         DOM.workspaceModal.style.display = 'flex';
@@ -1386,7 +1487,7 @@
         const name = DOM.workspaceName.value.trim();
         const error = LL.model.workspaceNameError(name, Object.keys(workspaces), renamingWorkspace);
         if (error) {
-            DOM.workspaceError.textContent = error;
+            DOM.workspaceError.textContent = t(error);
             DOM.workspaceName.focus();
             return;
         }
@@ -1408,7 +1509,7 @@
     function openAddModal() {
         editingTarget = null;
         addFolderId = openFolderId;
-        DOM.modalTitle.textContent = "Add Website";
+        DOM.modalTitle.textContent = t('Add Website');
         clearInputs();
         DOM.addModal.style.display = 'flex';
     }
@@ -1434,7 +1535,7 @@
         let img = DOM.imgInput.value;
 
         if (!name || !url) {
-            DOM.siteError.textContent = url ? 'Enter a name.' : 'Enter a URL.';
+            DOM.siteError.textContent = t(url ? 'Enter a name.' : 'Enter a URL.');
             (url ? DOM.nameInput : DOM.urlInput).focus();
             return;
         }
@@ -1527,7 +1628,7 @@
                 imported = LL.model.normalizeImport(data);
             } catch (err) { }
             if (!imported) {
-                showNotice({ title: 'Couldn’t import this file', message: 'It isn’t a Lightning Links backup, or it is damaged.' });
+                showNotice({ title: t('Couldn’t import this file'), message: t('It isn’t a Lightning Links backup, or it is damaged.') });
                 return;
             }
 
@@ -1560,13 +1661,14 @@
                 core[2][1] = JSON.stringify(nextSettings);
                 result = LL.storage.writeAll(localStorage, core, [LL.iconcache.KEY]);
                 if (result === 'full') {
-                    showNotice({ title: 'Backup not imported', message: 'There isn’t enough storage space. Nothing was changed.' });
+                    showNotice({ title: t('Backup not imported'), message: t('There isn’t enough storage space. Nothing was changed.') });
                     return;
                 }
-                if (importedBg) note = 'The wallpaper was too large to keep, so the default one is used.';
+                if (importedBg) note = t('The wallpaper was too large to keep, so the default one is used.');
             }
 
             // Storage is written: now switch the page over
+            const languageChanged = LL.i18n.resolve(nextSettings.language) !== LL.i18n.resolve(settings.language);
             workspaces = nextWorkspaces;
             lastActiveWorkspace = imported.lastActiveWorkspace;
             settings = nextSettings;
@@ -1575,9 +1677,11 @@
             localStorage.removeItem(LL.iconcache.KEY);
             applySettings();
             renderLightnings();
-            renderBackgroundOptions();
+            bgOptionsRendered = false;
             renderWorkspacesTabs();
-            showNotice({ title: 'Backup imported', message: note || 'Your links and settings have been restored.' });
+            showNotice({ title: t('Backup imported'), message: note || t('Your links and settings have been restored.') }).then(() => {
+                if (languageChanged) location.reload();
+            });
         };
 
         reader.readAsText(file);
@@ -1641,7 +1745,7 @@
                 try {
                     localStorage.setItem('bgImage', optimizedDataUrl);
                 } catch (err) {
-                    showNotice({ title: 'Picture too large', message: 'There isn’t enough storage space for this picture. Try a smaller file.' });
+                    showNotice({ title: t('Picture too large'), message: t('There isn’t enough storage space for this picture. Try a smaller file.') });
                     return;
                 }
                 customBg = optimizedDataUrl;

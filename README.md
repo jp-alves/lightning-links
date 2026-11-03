@@ -34,7 +34,9 @@ Lightning Links does one job: you open a tab, you click, and in less than a seco
 | 🖱️ **Right-click menu** | Open a site in a new tab or in Incognito, copy its link, edit or delete it. Folders can open all their links at once. |
 | 📐 **Layout** | Columns, icon size, horizontal and vertical spacing (negative values pull icons together) and name size. |
 | 🪟 **Auto-fit** | In a small or half-screen window, the lightnings shrink, and drop a column only if they have to, so you never need to scroll. You can turn this off. |
-| 🏞️ **Wallpapers** | Five photos are included, or upload your own. |
+| 🏞️ **Wallpapers** | Eight photos are included, or upload your own, or use a solid color. |
+| 🌍 **Languages** | English, Spanish, Portuguese, French, German, Italian, Russian, Polish, Romanian, Japanese, Chinese, Turkish and Arabic. |
+| 👋 **First-run welcome** | New installs pick a language and their first sites from the most popular ones, or skip it. |
 | 🌗 **Light and Dark** | Light by default; switch to Dark in Settings. |
 | 📴 **Offline icons** | With *Save icons for offline use* on, each icon is stored locally, so the page looks right without a connection. |
 | 💾 **Backup** | Export everything (links, folders, workspaces, layout, wallpaper and saved icons) to one JSON file, and import it on another computer. |
@@ -68,7 +70,7 @@ What the permissions are for:
 
 ## 💬 Tips
 
-- **Keep your wallpaper small.** Uploaded pictures are scaled down to about screen size and compressed, but a lighter file still loads faster. [TinyPNG](https://tinypng.com/) works well.
+- **Keep your wallpaper small.** Uploaded pictures are scaled down to about screen size and compressed, but a lighter file still loads faster. [Squoosh](https://squoosh.app/), free and by Google, works well.
 - **Custom icons.** Paste any image URL into *Icon URL* when adding a site. The icon cell is square, so square images look best.
 - **Storage.** Browsers give each extension about 5 MB of `localStorage`. If it fills up, offline icons are dropped first so your links are always kept.
 
@@ -80,8 +82,9 @@ Plain HTML, CSS and JavaScript. There are no dependencies and no build step: edi
 newtab.html     page markup
 init.js         runs before first paint: applies wallpaper, theme and layout from storage
 script.js       the rest of the page
-lib/            logic with no DOM access (layout math, data model, icon cache, storage)
-ui/             drag and drop, folder panel
+lib/            logic with little or no DOM access (layout math, data model, icon cache, storage, translations)
+locales/        one file per language; only the chosen one is loaded
+ui/             drag and drop, folder panel, first-run welcome
 tests/          unit tests for lib/
 ```
 

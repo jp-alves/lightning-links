@@ -6,6 +6,7 @@
     let bgImageURL = 'backgrounds/bg1.jpg'; // Default
     let settings = null;
     let customBg = null;
+    let solid = false;
 
     try {
         const saved = localStorage.getItem('mySettings');
@@ -32,15 +33,16 @@
         }
 
         // 1. Determine the correct background immediately
-        if (settings && settings.bgImage) {
+        solid = !!settings && settings.bgImage === 'color';
+        if (settings && settings.bgImage && !solid) {
             bgImageURL = settings.bgImage === 'custom' ? (customBg || bgImageURL) : settings.bgImage;
         }
 
         // 2. Apply CSS Variable immediately (Instant visual update)
-        root.style.setProperty('--bg-image', `url('${bgImageURL}')`);
+        root.style.setProperty('--bg-image', solid ? 'none' : `url('${bgImageURL}')`);
 
         // Until the picture is ready, show its average color (saved last time) instead of black
-        const bgColor = localStorage.getItem('bgColor');
+        const bgColor = solid ? LL.model.solidColor(settings) : localStorage.getItem('bgColor');
         if (bgColor) root.style.setProperty('--bg-color', bgColor);
 
         // 3. Apply Layout Settings
@@ -59,8 +61,22 @@
     root.dataset.theme = LL.appearance.resolveTheme(settings && settings.theme);
     root.dataset.labelColor = (settings && settings.labelColor) || 'light';
 
+    // Language before first paint. English is what the page is written in: nothing to load.
+    const language = LL.i18n.resolve(settings && settings.language);
+    if (language !== 'en') {
+        root.lang = language;
+        if (language === 'ar') root.dir = 'rtl';
+        document.write(`<script src="locales/${language}.js"><\/script>`);
+    }
+
     // Parsed once here; script.js reuses it instead of parsing again
     window.__LL_BOOT = { settings, bgImage: customBg };
+
+    // A solid color has no picture to wait for
+    if (solid) {
+        root.classList.add('bg-ready');
+        return;
+    }
 
     // 4. Lightnings show as soon as the DOM is ready (no waiting on the image).
     // The background layer appears once fully decoded (so it never paints in strips from

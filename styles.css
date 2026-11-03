@@ -1094,6 +1094,92 @@ input[type=range]:focus-visible::-webkit-slider-thumb {
     background: var(--destructive);
 }
 
+/* Solid color: the swatch opens the browser's color picker */
+.color-input {
+    flex: none;
+    width: 44px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 7px;
+    background: none;
+    cursor: pointer;
+    box-shadow: 0 0 0 0.5px var(--separator);
+    transition: box-shadow 150ms ease-out;
+}
+
+.color-input::-webkit-color-swatch-wrapper {
+    padding: 0;
+}
+
+.color-input::-webkit-color-swatch {
+    border: none;
+    border-radius: 7px;
+}
+
+.color-input.selected {
+    box-shadow: 0 0 0 2px var(--material-solid), 0 0 0 4.5px var(--accent);
+}
+
+.bg-tip {
+    display: flex;
+    gap: 8px;
+    margin: 12px 2px 0;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--label-secondary);
+}
+
+.bg-tip a {
+    color: var(--accent);
+}
+
+:root[data-theme="dark"] .bg-tip a {
+    color: #6cb4ff;
+}
+
+.select {
+    max-width: 200px;
+    height: 28px;
+    padding: 0 8px;
+    border: none;
+    border-radius: 7px;
+    background: var(--fill);
+    color: var(--label);
+    font: 13px var(--font);
+    cursor: pointer;
+}
+
+.select option {
+    background: var(--material-solid);
+    color: var(--label);
+}
+
+/* --- RIGHT-TO-LEFT (Arabic) --- */
+/* Drag & drop (lib/dragmath.js) and these controls' fill and thumb are computed left to right */
+[dir="rtl"] .container,
+[dir="rtl"] .folder-grid,
+[dir="rtl"] #workspaces-tabs,
+[dir="rtl"] input[type=range],
+[dir="rtl"] .toggle-switch {
+    direction: ltr;
+}
+
+[dir="rtl"] .settings-trigger {
+    right: auto;
+    left: 16px;
+}
+
+[dir="rtl"] #workspaces-container {
+    left: auto;
+    right: 16px;
+}
+
+[dir="rtl"] .value,
+[dir="rtl"] .field span {
+    text-align: left;
+}
+
 /* --- ACCESSIBILITY PREFERENCES --- */
 @media (prefers-reduced-motion: reduce) {
     .lightning .icon,
