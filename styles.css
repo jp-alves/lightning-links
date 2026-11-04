@@ -30,7 +30,7 @@
     --label-scale: 1;
     --row-pull: 0px;              /* negative vertical spacing: each row is pulled up by this */
     --row-gap: 20px;
-    --bg-image: url('backgrounds/bg1.jpg');
+    --bg-image: none;
 
     --font: 'Inter', -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
     --ease: cubic-bezier(.2, .7, .3, 1);
@@ -88,8 +88,8 @@ body {
     align-items: center;
     justify-content: center;
 
-    /* Until the wallpaper is decoded: its average color (init.js), or dark on the very first run */
-    background-color: var(--bg-color, #1a1a1a);
+    /* The solid color, or until a picture is decoded its average color (init.js) */
+    background-color: var(--bg-color, #f0efe9);
 
     /* Prevent scrollbars during load */
     overflow: hidden;
@@ -391,30 +391,30 @@ button {
     }
 }
 
-/* --- ADD BUTTON: an empty glass icon --- */
+/* --- ADD BUTTON: frosted light grey glass, visible on any wallpaper --- */
 .add-btn .icon {
-    background: rgba(255, 255, 255, 0.16);
-    -webkit-backdrop-filter: blur(20px) saturate(1.5);
-    backdrop-filter: blur(20px) saturate(1.5);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.38);
-    color: #fff;
+    background: rgba(240, 240, 244, 0.58);
+    -webkit-backdrop-filter: blur(30px) saturate(1.6) brightness(1.15);
+    backdrop-filter: blur(30px) saturate(1.6) brightness(1.15);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.65), 0 0 0 0.5px rgba(0, 0, 0, 0.12), 0 4px 14px rgba(0, 0, 0, 0.1);
+    color: #58585e;
 }
 
 .add-btn .icon .sym {
     width: 36%;
     height: 36%;
     stroke-width: 1.5;
-    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3));
 }
 
 .add-btn:hover .icon {
-    background: rgba(255, 255, 255, 0.26);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.55), 0 10px 24px rgba(0, 0, 0, 0.18);
+    background: rgba(245, 245, 248, 0.66);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.8), 0 0 0 0.5px rgba(0, 0, 0, 0.14), 0 10px 24px rgba(0, 0, 0, 0.18);
 }
 
 :root[data-theme="dark"] .add-btn .icon {
     background: rgba(28, 28, 30, 0.6);
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
+    color: #fff;
 }
 
 :root[data-theme="dark"] .add-btn:hover .icon {
@@ -1150,9 +1150,61 @@ input[type=range]:focus-visible::-webkit-slider-thumb {
     cursor: pointer;
 }
 
+/* Lets the options show flags (Chrome 135+); older browsers keep the plain list */
+.select,
+.select::picker(select) {
+    appearance: base-select;
+}
+
+.select button,
+.select selectedcontent {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.select button {
+    height: 100%;
+    padding: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: inherit;
+}
+
+.select::picker-icon {
+    display: none;
+}
+
+.select::picker(select) {
+    border: none;
+    border-radius: 10px;
+    padding: 4px;
+    background: var(--material-solid);
+    box-shadow: var(--menu-shadow);
+}
+
 .select option {
+    gap: 8px;
+    align-items: center;
+    border-radius: 6px;
     background: var(--material-solid);
     color: var(--label);
+}
+
+.select option:hover {
+    background: var(--fill-hover);
+}
+
+.flag {
+    flex: none;
+    display: inline-block;
+    width: 20px;
+    height: 15px;
+    border-radius: 2px;
+    background: url('icons/flags.webp') 0 calc(var(--flag) * -15px) / 20px 195px;
+    box-shadow: 0 0 0 0.5px rgba(0, 0, 0, 0.18);
 }
 
 /* --- RIGHT-TO-LEFT (Arabic) --- */
@@ -1225,9 +1277,16 @@ input[type=range]:focus-visible::-webkit-slider-thumb {
         background: rgba(44, 44, 46, 0.95);
     }
 
-    .lightning.folder .icon,
-    .add-btn .icon {
+    .lightning.folder .icon {
         background: rgba(44, 44, 46, 0.85);
+    }
+
+    .add-btn .icon {
+        background: rgb(232, 232, 236);
+    }
+
+    :root[data-theme="dark"] .add-btn .icon {
+        background: rgb(44, 44, 46);
     }
 }
 

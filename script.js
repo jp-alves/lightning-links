@@ -132,11 +132,11 @@
 
     const backgrounds = [
 
-        'backgrounds/bg1.jpg', 'backgrounds/bg2.jpg', 'backgrounds/bg3.jpg',
+        'backgrounds/bg2.jpg', 'backgrounds/bg3.jpg', 'backgrounds/bg4.jpg',
 
-        'backgrounds/bg4.jpg', 'backgrounds/bg5.jpg', 'backgrounds/bg6.jpg',
+        'backgrounds/bg5.jpg', 'backgrounds/bg6.jpg', 'backgrounds/bg7.jpg',
 
-        'backgrounds/bg7.jpg', 'backgrounds/bg8.jpg'
+        'backgrounds/bg8.jpg'
 
     ];
 
@@ -163,15 +163,16 @@
 
         rowGap: 20,
 
-        bgImage: 'backgrounds/bg1.jpg',
+        bgImage: 'color',
+        bgSolid: LL.model.DEFAULT_SOLID_COLOR,
 
         theme: 'light',
         labelScale: 100,
-        labelColor: 'light',
+        labelColor: BOOT.labelColor || 'dark',
 
         cacheIcons: false,
         autoFit: true,
-        language: 'en'
+        language: BOOT.language || 'en'
 
     };
 
@@ -323,6 +324,7 @@
     // No sites picked (Skip, or Finish with nothing selected): keeps the default lightnings
     function finishOnboarding(sites) {
         LL.storage.finishOnboarding(localStorage);
+        persistSettings(); // keeps the browser's language, which was only preselected until now
         if (!sites.length) return;
         workspaces[lastActiveWorkspace] = sites.map(([name, host, icon = host]) => ({
             name,
@@ -815,7 +817,7 @@
 
     // Background options rendering
 
-    // Built the first time the Wallpaper tab opens, so a new tab never fetches the thumbnails
+    // Built the first time the Background tab opens, so a new tab never fetches the thumbnails
     let bgOptionsRendered = false;
 
     function renderBackgroundOptions() {
@@ -831,6 +833,12 @@
 
         }
 
+    }
+
+    function useDefaultBackground(target) {
+        target.bgImage = DEFAULT_SETTINGS.bgImage;
+        target.bgSolid = DEFAULT_SETTINGS.bgSolid;
+        target.labelColor = LL.model.labelColorFor(target.bgSolid);
     }
 
     function createBgThumb(src, isCustom = false) {
@@ -850,6 +858,8 @@
         const value = isCustom ? 'custom' : src;
         if (value === settings.bgImage) img.classList.add('selected');
         img.onclick = () => {
+            // Only on a change: clicking the current photo keeps a color the user chose by hand
+            if (!isCustom && value !== settings.bgImage) settings.labelColor = LL.model.labelColorFor(value);
             settings.bgImage = value;
 
             saveSettings();
@@ -875,11 +885,11 @@
 
             delBtn.onclick = async (e) => {
                 e.stopPropagation();
-                const ok = await askConfirm({ title: t('Remove your picture?'), message: t('The wallpaper goes back to the default.'), confirmLabel: t('Remove') });
+                const ok = await askConfirm({ title: t('Remove your picture?'), message: t('The background goes back to the default.'), confirmLabel: t('Remove') });
                 if (ok) {
                     localStorage.removeItem('bgImage');
                     customBg = null;
-                    settings.bgImage = 'backgrounds/bg1.jpg';
+                    useDefaultBackground(settings);
 
                     saveSettings();
 
@@ -902,13 +912,19 @@
     // The language list is only needed once Settings is open
     function openSettings() {
         if (!DOM.languageSelect.options.length) {
-            LL.i18n.LANGUAGES.forEach(([code, name]) => DOM.languageSelect.add(new Option(name, code)));
+            LL.i18n.LANGUAGES.forEach(([code, name]) => {
+                const option = new Option(name, code);
+                option.prepend(LL.i18n.flag(code));
+                DOM.languageSelect.add(option);
+            });
             DOM.languageSelect.value = LL.i18n.resolve(settings.language);
         }
         DOM.settingsModal.style.display = 'flex';
     }
 
     function selectSolidColor(color) {
+        // The swatch's click also lands here: without a change, a hand-picked name color stays
+        if (settings.bgImage !== 'color' || color !== settings.bgSolid) settings.labelColor = LL.model.labelColorFor(color);
         settings.bgSolid = color;
         settings.bgImage = 'color';
         applySettings();
@@ -1642,7 +1658,7 @@
             const importedBg = imported.bgImage ||
                 (nextSettings.bgImage && String(nextSettings.bgImage).startsWith('data:') ? nextSettings.bgImage : null);
             if (importedBg) nextSettings.bgImage = 'custom';
-            else if (nextSettings.bgImage === 'custom' && !customBg) nextSettings.bgImage = 'backgrounds/bg1.jpg';
+            else if (nextSettings.bgImage === 'custom' && !customBg) useDefaultBackground(nextSettings);
 
             const core = [
                 ['myWorkspaces', JSON.stringify(nextWorkspaces)],
@@ -1657,14 +1673,14 @@
             let result = LL.storage.writeAll(localStorage, core.concat(extras));
             let extrasSaved = result === 'ok';
             if (!extrasSaved) {
-                if (importedBg) nextSettings.bgImage = 'backgrounds/bg1.jpg';
+                if (importedBg) useDefaultBackground(nextSettings);
                 core[2][1] = JSON.stringify(nextSettings);
                 result = LL.storage.writeAll(localStorage, core, [LL.iconcache.KEY]);
                 if (result === 'full') {
                     showNotice({ title: t('Backup not imported'), message: t('There isn’t enough storage space. Nothing was changed.') });
                     return;
                 }
-                if (importedBg) note = t('The wallpaper was too large to keep, so the default one is used.');
+                if (importedBg) note = t('The background was too large to keep, so the default one is used.');
             }
 
             // Storage is written: now switch the page over

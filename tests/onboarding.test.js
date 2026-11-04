@@ -45,6 +45,21 @@ test('local sites are only for known languages', () => {
 
 test('solidColor accepts only #rrggbb', () => {
     assert.strictEqual(model.solidColor({ bgSolid: '#AABBCC' }), '#AABBCC');
-    assert.strictEqual(model.solidColor({ bgSolid: 'red;x' }), '#1f2933');
-    assert.strictEqual(model.solidColor(null), '#1f2933');
+    assert.strictEqual(model.solidColor({ bgSolid: 'red;x' }), '#f0efe9');
+    assert.strictEqual(model.solidColor(null), '#f0efe9');
+});
+
+test('names follow the background: dark on bright photos and colors, light on the rest', () => {
+    ['bg2', 'bg6'].forEach(n => assert.strictEqual(model.labelColorFor(`backgrounds/${n}.jpg`), 'dark', n));
+    ['bg3', 'bg4', 'bg5', 'bg7', 'bg8'].forEach(n => assert.strictEqual(model.labelColorFor(`backgrounds/${n}.jpg`), 'light', n));
+    assert.strictEqual(model.labelColorFor('#f0efe9'), 'dark');
+    assert.strictEqual(model.labelColorFor('#1f2933'), 'light');
+});
+
+test('settings still pointing at the removed bg1.jpg become the same solid color', () => {
+    const migrated = model.migrateSettings({ bgImage: 'backgrounds/bg1.jpg', bgSolid: '#123456' });
+    assert.strictEqual(migrated.bgImage, 'color');
+    assert.strictEqual(migrated.bgSolid, '#f0efe9');
+    assert.strictEqual(model.migrateSettings({ bgImage: 'backgrounds/bg2.jpg' }).bgImage, 'backgrounds/bg2.jpg');
+    assert.strictEqual(model.normalizeImport({ workspaces: { W: [] }, settings: { bgImage: 'backgrounds/bg1.jpg' } }).settings.bgImage, 'color');
 });

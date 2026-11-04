@@ -54,6 +54,11 @@ test('resolve only accepts known languages, so a backup cannot choose a script p
     assert.strictEqual(i18n.resolve('../../evil'), 'en');
 });
 
+test('a new install gets the closest language to the browser, else English', () => {
+    const cases = { 'fr-CA': 'fr', 'pt-PT': 'pt-BR', 'pt-BR': 'pt-BR', 'es-ES': 'es-MX', 'zh-TW': 'zh-CN', ja: 'ja', 'en-GB': 'en', nl: 'en', undefined: 'en' };
+    Object.entries(cases).forEach(([tag, code]) => assert.strictEqual(i18n.fromBrowser(tag), code, tag));
+});
+
 test('English comes first and all 13 languages are listed', () => {
     assert.strictEqual(i18n.LANGUAGES[0][0], 'en');
     assert.strictEqual(i18n.LANGUAGES.length, 13);
@@ -67,6 +72,10 @@ test('collects the strings in use', () => {
 });
 
 for (const [code] of i18n.LANGUAGES.slice(1)) {
+    test(`${code}: the welcome title has the name the icon goes in front of`, () => {
+        assert.ok(loadLocale(code)['Welcome to Lightning Links'].includes('Lightning Links'));
+    });
+
     test(`${code}: translates every string, and nothing stale`, () => {
         const table = loadLocale(code);
         const keys = collectKeys();

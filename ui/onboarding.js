@@ -53,6 +53,8 @@
         'zh-CN': [['百度', 'www.baidu.com'], ['哔哩哔哩', 'www.bilibili.com'], ['淘宝', 'www.taobao.com'], ['微博', 'weibo.com'], ['知乎', 'www.zhihu.com'], ['京东', 'www.jd.com']]
     };
 
+    const BRAND = 'Lightning Links';
+
     function sitesFor(language) {
         return (LOCAL_SITES[language] || []).concat(SITES);
     }
@@ -82,17 +84,31 @@
         modal.style.display = 'flex';
         modal.appendChild(sheet);
 
+        const chosen = new Set(); // in click order: that becomes their order on the grid. Kept when going back.
+
         const finish = (sites) => {
             modal.remove();
             onDone(sites);
         };
 
-        function show(title, lead, body, footer) {
-            const h2 = el('h2', '', title);
+        // The app's icon and name, kept together on one line
+        function brand() {
+            const node = el('span', 'onboarding-brand');
+            const logo = el('img');
+            logo.src = 'icons/icon48.png';
+            logo.alt = '';
+            node.append(logo, BRAND);
+            return node;
+        }
+
+        // title: what goes in the heading (text and nodes)
+        function show(title, lead, body, footer, above = []) {
+            const h2 = el('h2');
+            h2.append(...title);
             h2.id = 'onboarding-title';
             const buttons = el('div', 'modal-buttons');
             buttons.append(...footer);
-            sheet.replaceChildren(h2, el('p', 'onboarding-lead', lead), body, buttons);
+            sheet.replaceChildren(...above, h2, el('p', 'onboarding-lead', lead), body, buttons);
         }
 
         function showLanguages() {
@@ -103,17 +119,19 @@
                     if (code !== language) onLanguage(code);
                 });
                 choice.lang = code;
+                choice.prepend(LL.i18n.flag(code));
                 choice.setAttribute('aria-pressed', String(code === language));
                 list.appendChild(choice);
             });
-            show(t('Welcome to Lightning Links'), t('Choose your language.'), list, [
+            // The name sits at a different place in each language's sentence
+            const [before, after] = t('Welcome to Lightning Links').split(BRAND);
+            show([before, brand(), after], t('Choose your language.'), list, [
                 button(t('Skip'), 'btn', () => finish([])),
                 button(t('Next'), 'btn btn-primary', showSites)
             ]);
         }
 
         function showSites() {
-            const chosen = new Set(); // in click order: that becomes their order on the grid
             const count = el('span', 'onboarding-count');
             const updateCount = () => { count.textContent = t('{n} selected', { n: chosen.size }); };
             const list = el('div', 'onboarding-sites');
@@ -126,7 +144,7 @@
                     choice.setAttribute('aria-pressed', String(on));
                     updateCount();
                 });
-                choice.setAttribute('aria-pressed', 'false');
+                choice.setAttribute('aria-pressed', String(chosen.has(site)));
                 const img = el('img');
                 img.src = `https://www.google.com/s2/favicons?domain=${icon}&sz=64`;
                 img.alt = '';
@@ -140,11 +158,16 @@
             });
             updateCount();
             const done = button(t('Finish'), 'btn btn-primary', () => finish([...chosen]));
-            show(t('Pick your favorite sites'), t('Click the ones you use. They become your first lightnings, and you can change them any time.'), list, [
+            const back = button(t('Back'), 'btn', () => {
+                showLanguages();
+                sheet.querySelector('.btn-primary').focus();
+            });
+            show([t('Pick your favorite sites')], t('Click the ones you use. They become your first lightnings, and you can change them any time.'), list, [
+                back,
                 count,
                 button(t('Skip'), 'btn', () => finish([])),
                 done
-            ]);
+            ], [brand()]);
             done.focus();
         }
 

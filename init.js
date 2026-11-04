@@ -3,10 +3,11 @@
     'use strict';
 
     const root = document.documentElement;
-    let bgImageURL = 'backgrounds/bg1.jpg'; // Default
+    let bgImageURL = null;
     let settings = null;
     let customBg = null;
-    let solid = false;
+    let solid = true; // The default wallpaper is a solid color
+    let browserLanguage = null;
 
     try {
         const saved = localStorage.getItem('mySettings');
@@ -33,9 +34,10 @@
         }
 
         // 1. Determine the correct background immediately
-        solid = !!settings && settings.bgImage === 'color';
-        if (settings && settings.bgImage && !solid) {
-            bgImageURL = settings.bgImage === 'custom' ? (customBg || bgImageURL) : settings.bgImage;
+        const choice = settings && settings.bgImage;
+        if (choice && choice !== 'color') {
+            bgImageURL = choice === 'custom' ? customBg : choice;
+            solid = !bgImageURL;
         }
 
         // 2. Apply CSS Variable immediately (Instant visual update)
@@ -44,6 +46,11 @@
         // Until the picture is ready, show its average color (saved last time) instead of black
         const bgColor = solid ? LL.model.solidColor(settings) : localStorage.getItem('bgColor');
         if (bgColor) root.style.setProperty('--bg-color', bgColor);
+
+        // A new install starts in the browser's language; updates keep what they had
+        if (!(settings && settings.language) && LL.storage.onboardingPending(localStorage)) {
+            browserLanguage = LL.i18n.fromBrowser(navigator.language);
+        }
 
         // 3. Apply Layout Settings
         if (settings) {
@@ -59,10 +66,13 @@
 
     // Appearance before first paint, so menus and sheets never flash the wrong colors
     root.dataset.theme = LL.appearance.resolveTheme(settings && settings.theme);
-    root.dataset.labelColor = (settings && settings.labelColor) || 'light';
+    // Dark names suit the light default background. Older settings got theirs in migrateSettings;
+    // someone who never changed a setting has none saved, and keeps the old default.
+    const labelColor = (settings && settings.labelColor) || (browserLanguage ? 'dark' : 'light');
+    root.dataset.labelColor = labelColor;
 
     // Language before first paint. English is what the page is written in: nothing to load.
-    const language = LL.i18n.resolve(settings && settings.language);
+    const language = LL.i18n.resolve((settings && settings.language) || browserLanguage);
     if (language !== 'en') {
         root.lang = language;
         if (language === 'ar') root.dir = 'rtl';
@@ -70,7 +80,7 @@
     }
 
     // Parsed once here; script.js reuses it instead of parsing again
-    window.__LL_BOOT = { settings, bgImage: customBg };
+    window.__LL_BOOT = { settings, bgImage: customBg, language, labelColor };
 
     // A solid color has no picture to wait for
     if (solid) {

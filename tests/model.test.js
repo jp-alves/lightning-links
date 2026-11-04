@@ -131,8 +131,13 @@ test('renameKey keeps the workspace in its place', () => {
     assert.deepStrictEqual(r.Personal, [A]);
 });
 
+test('migrateSettings keeps light names for older settings, and any saved choice', () => {
+    assert.strictEqual(model.migrateSettings({}).labelColor, 'light');
+    assert.strictEqual(model.migrateSettings({ labelColor: 'dark' }).labelColor, 'dark');
+});
+
 test('migrateSettings moves dialSize to lightningSize', () => {
-    assert.deepStrictEqual(model.migrateSettings({ dialSize: 120, colCount: 6 }), { lightningSize: 120, colCount: 6 });
-    assert.deepStrictEqual(model.migrateSettings({ dialSize: 120, lightningSize: 140 }), { lightningSize: 140 });
+    assert.deepStrictEqual(model.migrateSettings({ dialSize: 120, colCount: 6 }), { lightningSize: 120, colCount: 6, labelColor: 'light' });
+    assert.deepStrictEqual(model.migrateSettings({ dialSize: 120, lightningSize: 140 }), { lightningSize: 140, labelColor: 'light' });
     assert.strictEqual(model.migrateSettings(null), null);
 });
