@@ -11,6 +11,7 @@
 <p align="center">
   <img alt="Manifest V3" src="https://img.shields.io/badge/Manifest-V3-4285F4?logo=googlechrome&logoColor=white">
   <img alt="Chrome and Edge" src="https://img.shields.io/badge/Chrome%20%7C%20Edge-supported-0078D7?logo=microsoftedge&logoColor=white">
+  <a href="https://chromewebstore.google.com/detail/lightning-links-fast-new/hkogifdjalfafkapopbpmjdkploifkbc"><img alt="Available in the Chrome Web Store" src="https://img.shields.io/badge/Chrome%20Web%20Store-available-4285F4?logo=chromewebstore&logoColor=white"></a>
   <a href="LICENSE.txt"><img alt="MIT License" src="https://img.shields.io/badge/license-MIT-blue"></a>
 </p>
 
@@ -20,9 +21,21 @@
 
 ## 💡 Why
 
-I used **Speed Dial 2** for years. Over time it picked up an AI assistant, clocks, notes and a "focus mode" that moved the dials around and broke my muscle memory. Changing the background became a paid feature. I wanted the old version back, so I wrote my own.
+I used generic new tab extensions for years. Over time they picked up AI assistants, clocks, notes and "focus modes" that moved my shortcuts around and broke my muscle memory. Changing the background became a paid feature. I wanted the simple version back, so I wrote my own.
 
 Lightning Links does one job: you open a tab, you click, and in less than a second you're on the site you want.
+
+## 🚀 Install
+
+<p align="center">
+  <a href="https://chromewebstore.google.com/detail/lightning-links-fast-new/hkogifdjalfafkapopbpmjdkploifkbc">
+    <img src=".github/readme/chrome-web-store.png" alt="Available in the Chrome Web Store" width="340">
+  </a>
+</p>
+
+<p align="center">
+  Enjoying it? Don't forget to leave a ⭐ rating and a comment on the store page.
+</p>
 
 ## ✨ What it does
 
@@ -45,18 +58,6 @@ Lightning Links does one job: you open a tab, you click, and in less than a seco
   <img src=".github/readme/folder.jpg" alt="An open folder called News showing four news sites over a blurred background" width="49%">
   <img src=".github/readme/dark.jpg" alt="The settings sheet in dark mode, showing layout sliders, over a photo of a grass field at sunset" width="49%">
 </p>
-
-## 🚀 Install
-
-To install from the source:
-
-1. Download or clone this repository.
-2. Go to `chrome://extensions` (or `edge://extensions`).
-3. Turn on **Developer mode**.
-4. Click **Load unpacked** and pick the project folder.
-5. Open a new tab.
-
-To update, pull the latest code and click the reload button on the extension's card.
 
 ## 🔒 Privacy
 
