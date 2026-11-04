@@ -61,11 +61,10 @@ Lightning Links does one job: you open a tab, you click, and in less than a seco
 
 ## 🔒 Privacy
 
-Everything is stored in your browser's `localStorage`. Nothing is sent anywhere, and there is no server.
+Everything is stored in your browser's `localStorage`, and there is no server. The only network requests are for icons: Google's favicon service receives the domain of each saved link, and custom icons are loaded from the sites that host them. Nothing is sent to the developer.
 
 What the permissions are for:
 
-- `storage`: saving your links and settings.
 - `google.com` and `gstatic.com`: site icons come from Google's favicon service when you don't set one yourself.
 - *All sites* (optional): asked for only when you turn on offline icons, so icons hosted on other sites can be saved too. If you decline, Google-hosted icons are still saved.
 
