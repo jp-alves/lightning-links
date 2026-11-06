@@ -1254,6 +1254,33 @@ input[type=range]:focus-visible::-webkit-slider-thumb {
         background: rgba(30, 30, 32, 0.92);
     }
 
+    /* Light appearance: a solid light track with dark names, so the controls stay light */
+    :root:not([data-theme="dark"]) .glass {
+        background: rgb(229, 229, 234);
+    }
+
+    :root:not([data-theme="dark"]) .settings-trigger,
+    :root:not([data-theme="dark"]) .workspace-tab:not(.active):not(.drag-ghost) {
+        color: var(--label);
+        text-shadow: none;
+    }
+
+    :root:not([data-theme="dark"]) .settings-trigger .sym {
+        filter: none;
+    }
+
+    :root:not([data-theme="dark"]) .settings-trigger:hover {
+        background: rgb(216, 216, 222);
+    }
+
+    :root:not([data-theme="dark"]) .workspace-tab:not(.active):hover {
+        background: var(--fill);
+    }
+
+    :root[data-theme="dark"] .glass {
+        background: rgba(30, 30, 32, 0.92);
+    }
+
     .context-menu,
     .modal-content {
         -webkit-backdrop-filter: none;
