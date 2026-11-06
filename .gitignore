@@ -8,6 +8,7 @@ Thumbs.db
 .vscode/
 .superpowers/
 docs/superpowers/
+docs/store-listing/
 
 # AI assistant / tooling files (local only)
 .claude/
