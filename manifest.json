@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Lightning Links - Fast New Tab",
-  "version": "1.4.1",
-  "description": "A minimalist, privacy-focused new tab page that loads instantly.",
+  "default_locale": "en",
+  "name": "__MSG_appName__",
+  "version": "1.4.2",
+  "description": "__MSG_appDesc__",
   "chrome_url_overrides": {
     "newtab": "newtab.html"
   },

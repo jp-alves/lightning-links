@@ -84,6 +84,7 @@ init.js         runs before first paint: applies background, theme and layout fr
 script.js       the rest of the page
 lib/            logic with little or no DOM access (layout math, data model, icon cache, storage, translations)
 locales/        one file per language; only the chosen one is loaded
+_locales/       extension name and description per language, for Chrome and the Web Store
 ui/             drag and drop, folder panel, first-run welcome
 tests/          unit tests for lib/
 ```
